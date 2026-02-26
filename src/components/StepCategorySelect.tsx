@@ -1,6 +1,6 @@
 'use client';
 
-import { Layout, Type, Palette, Link } from 'lucide-react';
+import { Layout, Type, Palette, Link, Gauge, FileCheck, Search, Image } from 'lucide-react';
 import Card from './ui/Card';
 import Checkbox from './ui/Checkbox';
 import { TestCategory, CATEGORY_INFO } from '@/types';
@@ -15,6 +15,10 @@ const ICONS: Record<string, React.ElementType> = {
   Type,
   Palette,
   LinkIcon: Link,
+  Gauge,
+  FileCheck,
+  Search,
+  Image,
 };
 
 export default function StepCategorySelect({

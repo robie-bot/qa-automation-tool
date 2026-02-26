@@ -20,6 +20,10 @@ const CATEGORY_NAMES: Record<TestCategory, string> = {
   typography: 'Typography & Content',
   'color-scheme': 'Color Scheme',
   'broken-links': 'Broken Links & Images',
+  pagespeed: 'PageSpeed Insights',
+  'content-check': 'Content Cross-Check',
+  'text-finder': 'Text Finder',
+  'images-media': 'Images & Media',
 };
 
 export async function generateReport(

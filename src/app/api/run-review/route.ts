@@ -7,7 +7,7 @@ import { ReviewRequest, ReviewSummary, TestCategory, SSEEvent, TestIssue } from 
 export async function POST(request: NextRequest) {
   try {
     const body: ReviewRequest = await request.json();
-    const { targetUrl, pages, categories, referenceImage, config } = body;
+    const { targetUrl, pages, categories, referenceImage, config, contentDocument, searchTerms } = body;
 
     if (!targetUrl || !pages?.length || !categories?.length) {
       return new Response(
@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
             categories,
             config,
             referenceImage || null,
-            sendEvent
+            sendEvent,
+            contentDocument || null,
+            searchTerms || []
           );
 
           const duration = Date.now() - startTime;

@@ -1,6 +1,6 @@
 export type Severity = 'error' | 'warning' | 'info';
 
-export type TestCategory = 'layout' | 'typography' | 'color-scheme' | 'broken-links';
+export type TestCategory = 'layout' | 'typography' | 'color-scheme' | 'broken-links' | 'pagespeed' | 'content-check' | 'text-finder' | 'images-media';
 
 export interface DiscoveredPage {
   url: string;
@@ -39,6 +39,8 @@ export interface ReviewRequest {
   pages: string[];
   categories: TestCategory[];
   referenceImage?: string | null;
+  contentDocument?: string | null;
+  searchTerms?: string[];
   config: ReviewConfig;
 }
 
@@ -99,6 +101,9 @@ export interface ReviewState {
   selectedCategories: TestCategory[];
   selectedPages: string[];
   referenceImage: string | null;
+  contentDocument: string | null;       // base64 of uploaded PDF/TXT for content cross-check
+  contentDocumentName: string | null;    // filename for display
+  searchTerms: string[];                 // words/sentences/paragraphs for text-finder
   config: ReviewConfig;
 }
 
@@ -121,6 +126,10 @@ export const ALL_CATEGORIES: TestCategory[] = [
   'typography',
   'color-scheme',
   'broken-links',
+  'pagespeed',
+  'content-check',
+  'text-finder',
+  'images-media',
 ];
 
 export const CATEGORY_INFO: CategoryInfo[] = [
@@ -151,5 +160,33 @@ export const CATEGORY_INFO: CategoryInfo[] = [
     description: 'Check all links return 200, all images load, missing alt text',
     icon: 'LinkIcon',
     estimatedTime: '~30 sec/page',
+  },
+  {
+    id: 'pagespeed',
+    name: 'PageSpeed Insights',
+    description: 'Google Lighthouse performance, accessibility, best practices & SEO scores',
+    icon: 'Gauge',
+    estimatedTime: '~30 sec/page',
+  },
+  {
+    id: 'content-check',
+    name: 'Content Cross-Check',
+    description: 'Upload a PDF, DOCX, ODT, or text document and verify its content appears on website pages',
+    icon: 'FileCheck',
+    estimatedTime: '~15 sec/page',
+  },
+  {
+    id: 'text-finder',
+    name: 'Text Finder',
+    description: 'Search for specific words, sentences, or paragraphs across all pages',
+    icon: 'TextSearch',
+    estimatedTime: '~10 sec/page',
+  },
+  {
+    id: 'images-media',
+    name: 'Images & Media',
+    description: 'Image quality, stretching, alt text quality, video loading, slider/carousel functionality',
+    icon: 'Image',
+    estimatedTime: '~1 min/page',
   },
 ];

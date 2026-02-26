@@ -1,4 +1,4 @@
-import { ArrowRight, Layout, Type, Palette, Link, ClipboardCheck } from 'lucide-react';
+import { ArrowRight, Layout, Type, Palette, Link, ClipboardCheck, Gauge, FileCheck, Search, Image } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -59,6 +59,30 @@ export default function Home() {
               title: 'Broken Links & Images',
               description: 'Check all links return 200, images load correctly, missing alt attributes',
               color: 'bg-[#ACBFA4]/20 text-[#5a7a4e]',
+            },
+            {
+              icon: Gauge,
+              title: 'PageSpeed Insights',
+              description: 'Google Lighthouse performance, accessibility, best practices & SEO scores',
+              color: 'bg-emerald-50 text-emerald-600',
+            },
+            {
+              icon: FileCheck,
+              title: 'Content Cross-Check',
+              description: 'Upload a PDF, DOCX, ODT, or text document and verify its content appears on website pages',
+              color: 'bg-teal-50 text-teal-600',
+            },
+            {
+              icon: Search,
+              title: 'Text Finder',
+              description: 'Search for specific words, sentences, or paragraphs across all pages',
+              color: 'bg-indigo-50 text-indigo-600',
+            },
+            {
+              icon: Image,
+              title: 'Images & Media',
+              description: 'Image quality, stretching, alt text quality, video loading, slider/carousel functionality',
+              color: 'bg-rose-50 text-rose-600',
             },
           ].map((cat) => (
             <div

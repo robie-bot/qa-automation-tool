@@ -4,7 +4,14 @@ import { runLayoutTests } from './tests/layout';
 import { runTypographyTests } from './tests/typography';
 import { runColorSchemeTests } from './tests/color-scheme';
 import { runBrokenLinksTests } from './tests/broken-links';
+import { runPageSpeedTests } from './tests/pagespeed';
+import { runContentCheckTests } from './tests/content-check';
+import { runTextFinderTests } from './tests/text-finder';
+import { runImagesMediaTests } from './tests/images-media';
 import { launchBrowser } from './browser';
+
+// Categories that call an external API and don't need a browser page
+const API_ONLY_CATEGORIES: TestCategory[] = ['pagespeed'];
 
 type EventCallback = (event: SSEEvent) => void;
 
@@ -14,20 +21,30 @@ export async function runReview(
   categories: TestCategory[],
   config: ReviewConfig,
   referenceImage: string | null,
-  onEvent: EventCallback
+  onEvent: EventCallback,
+  contentDocument?: string | null,
+  searchTerms?: string[]
 ): Promise<TestIssue[]> {
   const allIssues: TestIssue[] = [];
+
+  const browserCategories = categories.filter((c) => !API_ONLY_CATEGORIES.includes(c));
+  const apiCategories = categories.filter((c) => API_ONLY_CATEGORIES.includes(c));
+  const needsBrowser = browserCategories.length > 0;
+
+  const totalSteps = pages.length * categories.length;
+  let completedSteps = 0;
+
   let browser: Browser | null = null;
+  let context: BrowserContext | null = null;
 
   try {
-    browser = await launchBrowser();
-    const context: BrowserContext = await browser.newContext({
-      userAgent: 'QA-Automation-Bot/1.0',
-      viewport: { width: 1440, height: 900 },
-    });
-
-    const totalSteps = pages.length * categories.length;
-    let completedSteps = 0;
+    if (needsBrowser) {
+      browser = await launchBrowser();
+      context = await browser.newContext({
+        userAgent: 'QA-Automation-Bot/1.0',
+        viewport: { width: 1440, height: 900 },
+      });
+    }
 
     for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
       const pagePath = pages[pageIdx];
@@ -35,7 +52,8 @@ export async function runReview(
         ? pagePath
         : new URL(pagePath, targetUrl).href;
 
-      for (const category of categories) {
+      // --- Browser-based categories ---
+      for (const category of browserCategories) {
         const percent = Math.round((completedSteps / totalSteps) * 100);
 
         onEvent({
@@ -48,7 +66,7 @@ export async function runReview(
 
         let page;
         try {
-          page = await context.newPage();
+          page = await context!.newPage();
           await page.goto(fullUrl, {
             waitUntil: 'networkidle',
             timeout: 30000,
@@ -90,11 +108,19 @@ export async function runReview(
             case 'broken-links':
               issues = await runBrokenLinksTests(page, pagePath, config);
               break;
+            case 'content-check':
+              issues = await runContentCheckTests(page, pagePath, config, contentDocument || null);
+              break;
+            case 'text-finder':
+              issues = await runTextFinderTests(page, pagePath, config, searchTerms || []);
+              break;
+            case 'images-media':
+              issues = await runImagesMediaTests(page, pagePath, config);
+              break;
           }
 
           allIssues.push(...issues);
 
-          // Send individual issue events for errors and warnings
           for (const issue of issues) {
             if (issue.severity !== 'info') {
               onEvent({
@@ -120,9 +146,56 @@ export async function runReview(
           completedSteps++;
         }
       }
+
+      // --- API-only categories (no browser needed) ---
+      for (const category of apiCategories) {
+        const percent = Math.round((completedSteps / totalSteps) * 100);
+
+        onEvent({
+          type: 'progress',
+          page: pagePath,
+          category,
+          percent,
+          message: `Running ${category} tests on ${pagePath}...`,
+        });
+
+        try {
+          let issues: TestIssue[] = [];
+
+          switch (category) {
+            case 'pagespeed':
+              issues = await runPageSpeedTests(fullUrl, config);
+              break;
+          }
+
+          allIssues.push(...issues);
+
+          for (const issue of issues) {
+            if (issue.severity !== 'info') {
+              onEvent({
+                type: 'issue',
+                severity: issue.severity,
+                page: pagePath,
+                category,
+                message: issue.message,
+              });
+            }
+          }
+        } catch (error) {
+          onEvent({
+            type: 'issue',
+            severity: 'warning',
+            page: pagePath,
+            category,
+            message: `Test error on ${pagePath} (${category}): ${error instanceof Error ? error.message : 'Unknown error'}`,
+          });
+        } finally {
+          completedSteps++;
+        }
+      }
     }
 
-    await context.close();
+    if (context) await context.close();
   } catch (error) {
     onEvent({
       type: 'error',

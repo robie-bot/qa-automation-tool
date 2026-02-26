@@ -40,6 +40,9 @@ export default function ReviewWizard() {
     selectedCategories: [...ALL_CATEGORIES],
     selectedPages: [],
     referenceImage: null,
+    contentDocument: null,
+    contentDocumentName: null,
+    searchTerms: [],
     config: { ...DEFAULT_CONFIG },
   });
 
@@ -51,6 +54,10 @@ export default function ReviewWizard() {
     typography: 'pending',
     'color-scheme': 'pending',
     'broken-links': 'pending',
+    pagespeed: 'pending',
+    'content-check': 'pending',
+    'text-finder': 'pending',
+    'images-media': 'pending',
   });
   const [issueCount, setIssueCount] = useState({ errors: 0, warnings: 0 });
   const [events, setEvents] = useState<SSEEvent[]>([]);
@@ -135,6 +142,10 @@ export default function ReviewWizard() {
       typography: 'pending',
       'color-scheme': 'pending',
       'broken-links': 'pending',
+      pagespeed: 'pending',
+      'content-check': 'pending',
+      'text-finder': 'pending',
+      'images-media': 'pending',
     });
 
     const pages = state.scope === 'full' || state.scope === 'by-category'
@@ -157,6 +168,8 @@ export default function ReviewWizard() {
           pages,
           categories,
           referenceImage: state.referenceImage,
+          contentDocument: state.contentDocument,
+          searchTerms: state.searchTerms,
           config: state.config,
         }),
         signal: controller.signal,
@@ -256,6 +269,9 @@ export default function ReviewWizard() {
       selectedCategories: [...ALL_CATEGORIES],
       selectedPages: [],
       referenceImage: null,
+      contentDocument: null,
+      contentDocumentName: null,
+      searchTerms: [],
       config: { ...DEFAULT_CONFIG },
     });
   };
@@ -361,6 +377,8 @@ export default function ReviewWizard() {
             reviewState={state}
             onRun={handleRun}
             onReferenceImageChange={(img) => setState((prev) => ({ ...prev, referenceImage: img }))}
+            onContentDocumentChange={(doc, name) => setState((prev) => ({ ...prev, contentDocument: doc, contentDocumentName: name }))}
+            onSearchTermsChange={(terms) => setState((prev) => ({ ...prev, searchTerms: terms }))}
             loading={false}
           />
         )}

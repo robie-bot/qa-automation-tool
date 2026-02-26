@@ -1,6 +1,6 @@
 'use client';
 
-import { Globe, Layers, FolderCheck, Clock, Upload } from 'lucide-react';
+import { Globe, Layers, FolderCheck, Clock, Upload, FileCheck, Search, X, Plus } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import { ReviewState, CATEGORY_INFO } from '@/types';
@@ -10,6 +10,8 @@ interface StepConfirmRunProps {
   reviewState: ReviewState;
   onRun: () => void;
   onReferenceImageChange: (image: string | null) => void;
+  onContentDocumentChange: (doc: string | null, name: string | null) => void;
+  onSearchTermsChange: (terms: string[]) => void;
   loading: boolean;
 }
 
@@ -17,10 +19,14 @@ export default function StepConfirmRun({
   reviewState,
   onRun,
   onReferenceImageChange,
+  onContentDocumentChange,
+  onSearchTermsChange,
   loading,
 }: StepConfirmRunProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const refImageInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
   const [refImageName, setRefImageName] = useState('');
+  const [newTerm, setNewTerm] = useState('');
 
   const categoryNames = reviewState.selectedCategories
     .map((id) => CATEGORY_INFO.find((c) => c.id === id)?.name || id)
@@ -38,14 +44,58 @@ export default function StepConfirmRun({
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result as string;
-      // Remove data URL prefix to get just base64
       const base64 = result.split(',')[1];
       onReferenceImageChange(base64);
     };
     reader.readAsDataURL(file);
   };
 
+  const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result as ArrayBuffer;
+      const base64 = Buffer.from(result).toString('base64');
+      onContentDocumentChange(base64, file.name);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const addTerm = () => {
+    const trimmed = newTerm.trim();
+    if (trimmed && !reviewState.searchTerms.includes(trimmed)) {
+      onSearchTermsChange([...reviewState.searchTerms, trimmed]);
+      setNewTerm('');
+    }
+  };
+
+  const removeTerm = (term: string) => {
+    onSearchTermsChange(reviewState.searchTerms.filter((t) => t !== term));
+  };
+
+  const handleTermKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTerm();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const text = e.clipboardData.getData('text');
+    // If pasting multi-line text, add each line as a separate term
+    if (text.includes('\n')) {
+      e.preventDefault();
+      const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+      const existing = new Set(reviewState.searchTerms);
+      const newTerms = lines.filter((l) => !existing.has(l));
+      onSearchTermsChange([...reviewState.searchTerms, ...newTerms]);
+    }
+  };
+
   const showRefUpload = reviewState.selectedCategories.includes('color-scheme');
+  const showContentDoc = reviewState.selectedCategories.includes('content-check');
+  const showTextFinder = reviewState.selectedCategories.includes('text-finder');
 
   return (
     <div className="space-y-6">
@@ -110,7 +160,7 @@ export default function StepConfirmRun({
           </p>
           <div
             className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => refImageInputRef.current?.click()}
           >
             {refImageName ? (
               <p className="text-sm text-[#262626]">{refImageName}</p>
@@ -118,13 +168,123 @@ export default function StepConfirmRun({
               <p className="text-sm text-gray-400">Click to upload reference image</p>
             )}
             <input
-              ref={fileInputRef}
+              ref={refImageInputRef}
               type="file"
               accept="image/*"
               className="hidden"
               onChange={handleRefImage}
             />
           </div>
+        </Card>
+      )}
+
+      {/* Content document upload for content cross-check */}
+      {showContentDoc && (
+        <Card className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <FileCheck className="w-4 h-4 text-gray-400" />
+            <p className="text-sm font-medium text-[#262626]">Content Document</p>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            Upload a document file. Its content will be checked against each page to verify
+            that key text, paragraphs, and sentences appear on the website.
+          </p>
+          <div
+            className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
+            onClick={() => docInputRef.current?.click()}
+          >
+            {reviewState.contentDocumentName ? (
+              <div className="flex items-center justify-center gap-2">
+                <FileCheck className="w-4 h-4 text-[#5a7a4e]" />
+                <p className="text-sm text-[#262626] font-medium">{reviewState.contentDocumentName}</p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onContentDocumentChange(null, null);
+                  }}
+                  className="ml-2 text-gray-400 hover:text-[#E53E3E] transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <Upload className="w-6 h-6 mx-auto text-gray-400 mb-1" />
+                <p className="text-sm text-gray-400">Click to upload a document</p>
+                <p className="text-xs text-gray-300 mt-1">.pdf, .docx, .odt, .txt, .md supported</p>
+              </>
+            )}
+            <input
+              ref={docInputRef}
+              type="file"
+              accept=".pdf,.docx,.odt,.txt,.text,.md,.csv"
+              className="hidden"
+              onChange={handleDocUpload}
+            />
+          </div>
+        </Card>
+      )}
+
+      {/* Search terms input for text finder */}
+      {showTextFinder && (
+        <Card className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Search className="w-4 h-4 text-gray-400" />
+            <p className="text-sm font-medium text-[#262626]">Search Terms</p>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">
+            Add words, sentences, or paragraphs to search for across all pages.
+            Press Enter to add each term. Paste multi-line text to add multiple at once.
+          </p>
+
+          {/* Input area */}
+          <div className="flex gap-2 mb-3">
+            <textarea
+              value={newTerm}
+              onChange={(e) => setNewTerm(e.target.value)}
+              onKeyDown={handleTermKeyDown}
+              onPaste={handlePaste}
+              placeholder="Type a word, sentence, or paragraph..."
+              rows={2}
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-[#262626] placeholder:text-gray-400 outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 resize-none transition-all"
+            />
+            <Button onClick={addTerm} size="sm" className="self-end">
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          </div>
+
+          {/* Term list */}
+          {reviewState.searchTerms.length > 0 && (
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {reviewState.searchTerms.map((term, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2 group"
+                >
+                  <span className="text-xs text-gray-400 font-mono mt-0.5 flex-shrink-0">
+                    {idx + 1}.
+                  </span>
+                  <p className="text-sm text-[#262626] flex-1 break-words">
+                    {term.length > 120 ? term.substring(0, 120) + '...' : term}
+                  </p>
+                  <button
+                    onClick={() => removeTerm(term)}
+                    className="text-gray-300 hover:text-[#E53E3E] transition-colors flex-shrink-0 mt-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              <p className="text-xs text-gray-400 pt-1">
+                {reviewState.searchTerms.length} search term{reviewState.searchTerms.length !== 1 ? 's' : ''} added
+              </p>
+            </div>
+          )}
+
+          {reviewState.searchTerms.length === 0 && (
+            <p className="text-xs text-[#FF7F11]">Add at least one search term.</p>
+          )}
         </Card>
       )}
 
