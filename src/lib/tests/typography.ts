@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { Page } from 'playwright-core';
 import { TestIssue, ReviewConfig } from '@/types';
 
 function luminance(r: number, g: number, b: number): number {

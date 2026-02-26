@@ -1,7 +1,8 @@
-import { chromium, Browser } from 'playwright';
+import { Browser } from 'playwright-core';
 import { parseStringPromise } from 'xml2js';
 import { DiscoveredPage } from '@/types';
 import { normalizeUrl, getPathFromUrl } from './utils';
+import { launchBrowser } from './browser';
 
 export async function parseSitemap(sitemapContent: string, baseUrl: string): Promise<DiscoveredPage[]> {
   try {
@@ -73,7 +74,7 @@ export async function crawlSite(
   let browser: Browser | null = null;
 
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await launchBrowser();
     const context = await browser.newContext({
       userAgent: 'QA-Automation-Bot/1.0',
     });

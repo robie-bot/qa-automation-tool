@@ -1,9 +1,10 @@
-import { chromium, Browser, BrowserContext } from 'playwright';
+import { Browser, BrowserContext } from 'playwright-core';
 import { TestCategory, TestIssue, ReviewConfig, SSEEvent } from '@/types';
 import { runLayoutTests } from './tests/layout';
 import { runTypographyTests } from './tests/typography';
 import { runColorSchemeTests } from './tests/color-scheme';
 import { runBrokenLinksTests } from './tests/broken-links';
+import { launchBrowser } from './browser';
 
 type EventCallback = (event: SSEEvent) => void;
 
@@ -19,7 +20,7 @@ export async function runReview(
   let browser: Browser | null = null;
 
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await launchBrowser();
     const context: BrowserContext = await browser.newContext({
       userAgent: 'QA-Automation-Bot/1.0',
       viewport: { width: 1440, height: 900 },
