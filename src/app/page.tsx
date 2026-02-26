@@ -1,65 +1,115 @@
-import Image from "next/image";
+import { ArrowRight, Layout, Type, Palette, Link, ClipboardCheck } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="space-y-10">
+      {/* Hero */}
+      <div>
+        <h1 className="text-3xl font-bold text-[#262626]">
+          Website QA Dashboard
+        </h1>
+        <p className="text-gray-500 mt-2 max-w-2xl">
+          Run scoped website reviews — choose specific test categories, specific pages,
+          or a full site review. Get detailed reports with screenshots.
+        </p>
+      </div>
+
+      {/* Quick start */}
+      <a
+        href="/review"
+        className="group flex items-center justify-between p-6 bg-[#262626] rounded-2xl text-white hover:bg-[#333] transition-colors"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-[#FF7F11] rounded-xl flex items-center justify-center">
+            <ClipboardCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">Start New Review</h2>
+            <p className="text-sm text-gray-400">Configure and run a website quality review</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#FF7F11] group-hover:translate-x-1 transition-all" />
+      </a>
+
+      {/* Test categories overview */}
+      <div>
+        <h2 className="text-lg font-semibold text-[#262626] mb-4">Test Categories</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            {
+              icon: Layout,
+              title: 'General Layout',
+              description: 'Viewport responsiveness, element overlap, spacing consistency, z-index issues',
+              color: 'bg-blue-50 text-blue-600',
+            },
+            {
+              icon: Type,
+              title: 'Typography & Content',
+              description: 'Font sizes, heading hierarchy, line heights, text contrast (WCAG AA)',
+              color: 'bg-purple-50 text-purple-600',
+            },
+            {
+              icon: Palette,
+              title: 'Color Scheme',
+              description: 'Compare page colors against reference images using Delta-E color difference',
+              color: 'bg-[#FF7F11]/10 text-[#FF7F11]',
+            },
+            {
+              icon: Link,
+              title: 'Broken Links & Images',
+              description: 'Check all links return 200, images load correctly, missing alt attributes',
+              color: 'bg-[#ACBFA4]/20 text-[#5a7a4e]',
+            },
+          ].map((cat) => (
+            <div
+              key={cat.title}
+              className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition-shadow"
+            >
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${cat.color}`}>
+                  <cat.icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[#262626]">{cat.title}</h3>
+                  <p className="text-xs text-gray-500 mt-1">{cat.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </main>
+      </div>
+
+      {/* How it works */}
+      <div>
+        <h2 className="text-lg font-semibold text-[#262626] mb-4">How It Works</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {[
+            {
+              step: '1',
+              title: 'Enter Your URL',
+              description: 'Provide a website URL or upload a sitemap. We\'ll discover all pages automatically.',
+            },
+            {
+              step: '2',
+              title: 'Choose Scope',
+              description: 'Run a full review, select specific categories, or pick individual pages to test.',
+            },
+            {
+              step: '3',
+              title: 'Get Results',
+              description: 'View issues in real-time, then download a comprehensive PDF report with screenshots.',
+            },
+          ].map((item) => (
+            <div key={item.step} className="text-center">
+              <div className="w-10 h-10 bg-[#FF7F11] text-white rounded-full flex items-center justify-center mx-auto text-sm font-bold">
+                {item.step}
+              </div>
+              <h3 className="text-sm font-semibold text-[#262626] mt-3">{item.title}</h3>
+              <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
