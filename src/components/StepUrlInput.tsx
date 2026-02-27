@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Globe, Upload, Link2, Loader2, CheckCircle2 } from 'lucide-react';
+import { Globe, Upload, Link2, Loader2, CheckCircle2, FileSearch } from 'lucide-react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Card from './ui/Card';
@@ -14,7 +14,7 @@ interface StepUrlInputProps {
 export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
   const [url, setUrl] = useState('');
   const [sitemapUrl, setSitemapUrl] = useState('');
-  const [inputMode, setInputMode] = useState<'url' | 'sitemap-url' | 'sitemap-file'>('url');
+  const [inputMode, setInputMode] = useState<'url' | 'single' | 'sitemap-url' | 'sitemap-file'>('url');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pagesFound, setPagesFound] = useState<number | null>(null);
@@ -37,6 +37,29 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
     setError('');
     setPagesFound(null);
     setLoading(true);
+
+    // Single page mode — skip crawling entirely
+    if (inputMode === 'single') {
+      if (!url) {
+        setError('Please enter a URL');
+        setLoading(false);
+        return;
+      }
+      let targetUrl = url.trim();
+      if (!targetUrl.startsWith('http')) {
+        targetUrl = `https://${targetUrl}`;
+      }
+      const parsedUrl = new URL(targetUrl);
+      const page: DiscoveredPage = {
+        url: targetUrl,
+        title: parsedUrl.pathname === '/' ? 'Home' : parsedUrl.pathname,
+        path: parsedUrl.pathname || '/',
+      };
+      setPagesFound(1);
+      onPagesDiscovered(targetUrl, [page]);
+      setLoading(false);
+      return;
+    }
 
     let targetUrl = url;
     let sitemap: string | undefined;
@@ -89,7 +112,8 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
   };
 
   const modes = [
-    { id: 'url' as const, label: 'Website URL', icon: Globe, desc: 'Enter a website URL to crawl' },
+    { id: 'url' as const, label: 'Website URL', icon: Globe, desc: 'Crawl & discover all pages' },
+    { id: 'single' as const, label: 'Single Page', icon: FileSearch, desc: 'Review only the pasted link' },
     { id: 'sitemap-url' as const, label: 'Sitemap URL', icon: Link2, desc: 'Paste a sitemap.xml URL' },
     { id: 'sitemap-file' as const, label: 'Upload Sitemap', icon: Upload, desc: 'Upload a sitemap.xml file' },
   ];
@@ -104,7 +128,7 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
       </div>
 
       {/* Input mode selection */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {modes.map((mode) => (
           <Card
             key={mode.id}
@@ -122,10 +146,10 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
 
       {/* Input fields */}
       <div className="space-y-4">
-        {inputMode === 'url' && (
+        {(inputMode === 'url' || inputMode === 'single') && (
           <Input
-            label="Website URL"
-            placeholder="https://example.com"
+            label={inputMode === 'single' ? 'Page URL' : 'Website URL'}
+            placeholder={inputMode === 'single' ? 'https://example.com/about' : 'https://example.com'}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             error={error && !loading ? error : undefined}
@@ -183,7 +207,10 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
       {/* Discover button */}
       <div className="flex items-center gap-4">
         <Button onClick={handleDiscover} loading={loading} size="lg">
-          {loading ? 'Discovering Pages...' : 'Discover Pages'}
+          {loading
+            ? (inputMode === 'single' ? 'Loading...' : 'Discovering Pages...')
+            : (inputMode === 'single' ? 'Continue' : 'Discover Pages')
+          }
         </Button>
 
         {pagesFound !== null && (
