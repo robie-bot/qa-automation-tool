@@ -1,6 +1,8 @@
 export type Severity = 'error' | 'warning' | 'info';
 
-export type TestCategory = 'layout' | 'typography' | 'color-scheme' | 'broken-links' | 'pagespeed' | 'content-check' | 'text-finder' | 'images-media';
+export type AIProvider = 'claude' | 'openai' | 'gemini';
+
+export type TestCategory = 'layout' | 'typography' | 'color-scheme' | 'broken-links' | 'pagespeed' | 'content-check' | 'text-finder' | 'images-media' | 'ai-review';
 
 export interface DiscoveredPage {
   url: string;
@@ -16,6 +18,7 @@ export interface TestIssue {
   category: TestCategory;
   pageUrl: string;
   viewport?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface TypographyConfig {
@@ -32,6 +35,8 @@ export interface ReviewConfig {
   colorThreshold: number;
   linkTimeout: number;
   viewports: number[];
+  aiReviewVision: boolean;
+  aiProvider: AIProvider;
 }
 
 export interface ReviewRequest {
@@ -59,6 +64,7 @@ export interface IssueEvent {
   category: TestCategory;
   message: string;
   screenshot?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CompleteEvent {
@@ -72,7 +78,56 @@ export interface ErrorEvent {
   message: string;
 }
 
-export type SSEEvent = ProgressEvent | IssueEvent | CompleteEvent | ErrorEvent;
+export interface DataEvent {
+  type: 'data';
+  page: string;
+  category: TestCategory;
+  dataType: string;
+  payload: unknown;
+}
+
+export type SSEEvent = ProgressEvent | IssueEvent | CompleteEvent | ErrorEvent | DataEvent;
+
+// --- PageSpeed Insights structured types ---
+
+export interface PageSpeedMetricValue {
+  id: string;
+  title: string;
+  numericValue: number;
+  displayValue: string;
+  score: number | null;
+}
+
+export interface PageSpeedAudit {
+  id: string;
+  title: string;
+  description: string;
+  score: number | null;
+  scoreDisplayMode: string;
+  displayValue?: string;
+  numericValue?: number;
+  group?: string;
+}
+
+export interface PageSpeedCategoryResult {
+  id: string;
+  title: string;
+  score: number | null;
+  auditRefs: { id: string; weight: number; group?: string }[];
+}
+
+export interface PageSpeedStrategyResult {
+  strategy: 'mobile' | 'desktop';
+  categories: Record<string, PageSpeedCategoryResult>;
+  audits: Record<string, PageSpeedAudit>;
+  metrics: PageSpeedMetricValue[];
+}
+
+export interface PageSpeedData {
+  pageUrl: string;
+  mobile: PageSpeedStrategyResult | null;
+  desktop: PageSpeedStrategyResult | null;
+}
 
 export interface ReviewSummary {
   totalIssues: number;
@@ -119,6 +174,8 @@ export const DEFAULT_CONFIG: ReviewConfig = {
   colorThreshold: 10,
   linkTimeout: 5000,
   viewports: [1920, 1440, 1024, 768, 375],
+  aiReviewVision: false,
+  aiProvider: 'claude',
 };
 
 export const ALL_CATEGORIES: TestCategory[] = [
@@ -130,6 +187,7 @@ export const ALL_CATEGORIES: TestCategory[] = [
   'content-check',
   'text-finder',
   'images-media',
+  'ai-review',
 ];
 
 export const CATEGORY_INFO: CategoryInfo[] = [
@@ -188,5 +246,12 @@ export const CATEGORY_INFO: CategoryInfo[] = [
     description: 'Image quality, stretching, alt text quality, video loading, slider/carousel functionality',
     icon: 'Image',
     estimatedTime: '~1 min/page',
+  },
+  {
+    id: 'ai-review',
+    name: 'AI Review',
+    description: 'Claude AI analyzes all test results to provide expert QA insights, prioritization, and recommendations',
+    icon: 'Sparkles',
+    estimatedTime: '~30 sec',
   },
 ];

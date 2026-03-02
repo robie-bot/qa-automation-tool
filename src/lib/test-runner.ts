@@ -1,5 +1,5 @@
 import { Browser, BrowserContext } from 'playwright-core';
-import { TestCategory, TestIssue, ReviewConfig, SSEEvent } from '@/types';
+import { TestCategory, TestIssue, ReviewConfig, SSEEvent, PageSpeedData } from '@/types';
 import { runLayoutTests } from './tests/layout';
 import { runTypographyTests } from './tests/typography';
 import { runColorSchemeTests } from './tests/color-scheme';
@@ -8,10 +8,14 @@ import { runPageSpeedTests } from './tests/pagespeed';
 import { runContentCheckTests } from './tests/content-check';
 import { runTextFinderTests } from './tests/text-finder';
 import { runImagesMediaTests } from './tests/images-media';
+import { runAIReviewTests } from './tests/ai-review';
 import { launchBrowser } from './browser';
 
 // Categories that call an external API and don't need a browser page
 const API_ONLY_CATEGORIES: TestCategory[] = ['pagespeed'];
+
+// Categories that run after all other tests complete (they analyze collected results)
+const POST_PROCESS_CATEGORIES: TestCategory[] = ['ai-review'];
 
 type EventCallback = (event: SSEEvent) => void;
 
@@ -27,11 +31,13 @@ export async function runReview(
 ): Promise<TestIssue[]> {
   const allIssues: TestIssue[] = [];
 
-  const browserCategories = categories.filter((c) => !API_ONLY_CATEGORIES.includes(c));
-  const apiCategories = categories.filter((c) => API_ONLY_CATEGORIES.includes(c));
+  const mainCategories = categories.filter((c) => !POST_PROCESS_CATEGORIES.includes(c));
+  const postProcessCategories = categories.filter((c) => POST_PROCESS_CATEGORIES.includes(c));
+  const browserCategories = mainCategories.filter((c) => !API_ONLY_CATEGORIES.includes(c));
+  const apiCategories = mainCategories.filter((c) => API_ONLY_CATEGORIES.includes(c));
   const needsBrowser = browserCategories.length > 0;
 
-  const totalSteps = pages.length * categories.length;
+  const totalSteps = pages.length * mainCategories.length + postProcessCategories.length;
   let completedSteps = 0;
 
   let browser: Browser | null = null;
@@ -181,6 +187,22 @@ export async function runReview(
               });
             }
           }
+
+          // Emit structured data for pagespeed rich UI
+          if (category === 'pagespeed') {
+            const metaIssue = issues.find(
+              (i) => i.metadata && (i.metadata as Record<string, unknown>).type === 'pagespeed-result'
+            );
+            if (metaIssue?.metadata) {
+              onEvent({
+                type: 'data',
+                page: pagePath,
+                category: 'pagespeed',
+                dataType: 'pagespeed-result',
+                payload: (metaIssue.metadata as Record<string, unknown>).data as PageSpeedData,
+              });
+            }
+          }
         } catch (error) {
           onEvent({
             type: 'issue',
@@ -196,6 +218,53 @@ export async function runReview(
     }
 
     if (context) await context.close();
+
+    // --- Post-process categories (run after all other tests) ---
+    for (const category of postProcessCategories) {
+      const percent = Math.round((completedSteps / totalSteps) * 100);
+
+      onEvent({
+        type: 'progress',
+        page: targetUrl,
+        category,
+        percent,
+        message: `Running ${category} analysis...`,
+      });
+
+      try {
+        let issues: TestIssue[] = [];
+
+        switch (category) {
+          case 'ai-review':
+            issues = await runAIReviewTests(targetUrl, pages, allIssues, config, onEvent);
+            break;
+        }
+
+        allIssues.push(...issues);
+
+        for (const issue of issues) {
+          if (issue.severity !== 'info') {
+            onEvent({
+              type: 'issue',
+              severity: issue.severity,
+              page: issue.pageUrl,
+              category,
+              message: issue.message,
+            });
+          }
+        }
+      } catch (error) {
+        onEvent({
+          type: 'issue',
+          severity: 'warning',
+          page: targetUrl,
+          category,
+          message: `${category} error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        });
+      } finally {
+        completedSteps++;
+      }
+    }
   } catch (error) {
     onEvent({
       type: 'error',

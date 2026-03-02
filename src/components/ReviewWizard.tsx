@@ -21,6 +21,7 @@ import {
   SSEEvent,
   ReviewSummary,
   TestIssue,
+  PageSpeedData,
   CATEGORY_INFO,
 } from '@/types';
 
@@ -58,6 +59,7 @@ export default function ReviewWizard() {
     'content-check': 'pending',
     'text-finder': 'pending',
     'images-media': 'pending',
+    'ai-review': 'pending',
   });
   const [issueCount, setIssueCount] = useState({ errors: 0, warnings: 0 });
   const [events, setEvents] = useState<SSEEvent[]>([]);
@@ -66,6 +68,7 @@ export default function ReviewWizard() {
   const [allIssues, setAllIssues] = useState<TestIssue[]>([]);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
+  const [pageSpeedResults, setPageSpeedResults] = useState<PageSpeedData[]>([]);
 
   const handlePagesDiscovered = useCallback((url: string, pages: DiscoveredPage[]) => {
     setState((prev) => ({
@@ -137,6 +140,7 @@ export default function ReviewWizard() {
     setCurrentMessage('Starting review...');
     setEvents([]);
     setIssueCount({ errors: 0, warnings: 0 });
+    setPageSpeedResults([]);
     setCategoryStatuses({
       layout: 'pending',
       typography: 'pending',
@@ -146,6 +150,7 @@ export default function ReviewWizard() {
       'content-check': 'pending',
       'text-finder': 'pending',
       'images-media': 'pending',
+      'ai-review': 'pending',
     });
 
     const pages = state.scope === 'full' || state.scope === 'by-category'
@@ -236,6 +241,12 @@ export default function ReviewWizard() {
                 setTimeout(() => setPhase('results'), 500);
                 break;
 
+              case 'data':
+                if (event.dataType === 'pagespeed-result' && event.payload) {
+                  setPageSpeedResults((prev) => [...prev, event.payload as PageSpeedData]);
+                }
+                break;
+
               case 'error':
                 setCurrentMessage(`Error: ${event.message}`);
                 break;
@@ -307,7 +318,7 @@ export default function ReviewWizard() {
         </div>
 
         <ReportDownload reportId={reportId} />
-        <ResultsDashboard issues={allIssues} summary={summary} />
+        <ResultsDashboard issues={allIssues} summary={summary} pageSpeedResults={pageSpeedResults} />
       </div>
     );
   }
@@ -363,6 +374,10 @@ export default function ReviewWizard() {
           <StepCategorySelect
             selectedCategories={state.selectedCategories}
             onCategoriesChange={(cats) => setState((prev) => ({ ...prev, selectedCategories: cats }))}
+            aiReviewVision={state.config.aiReviewVision}
+            onAIReviewVisionChange={(v) => setState((prev) => ({ ...prev, config: { ...prev.config, aiReviewVision: v } }))}
+            aiProvider={state.config.aiProvider}
+            onAIProviderChange={(p) => setState((prev) => ({ ...prev, config: { ...prev.config, aiProvider: p } }))}
           />
         )}
         {step === 3 && (
@@ -385,16 +400,18 @@ export default function ReviewWizard() {
       </div>
 
       {/* Navigation */}
-      {step > 0 && step < 4 && (
+      {step > 0 && (
         <div className="flex justify-between pt-4 border-t border-gray-100">
           <Button variant="ghost" onClick={goBack}>
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <Button onClick={goNext} disabled={!canGoNext()}>
-            Next
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+          {step < 4 && (
+            <Button onClick={goNext} disabled={!canGoNext()}>
+              Next
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       )}
     </div>

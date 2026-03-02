@@ -1,13 +1,29 @@
 'use client';
 
-import { Layout, Type, Palette, Link, Gauge, FileCheck, Search, Image } from 'lucide-react';
+import { Layout, Type, Palette, Link, Gauge, FileCheck, Search, Image, Sparkles } from 'lucide-react';
 import Card from './ui/Card';
 import Checkbox from './ui/Checkbox';
-import { TestCategory, CATEGORY_INFO } from '@/types';
+import { TestCategory, AIProvider, CATEGORY_INFO } from '@/types';
+
+const AI_PROVIDER_OPTIONS: { value: AIProvider; label: string }[] = [
+  { value: 'claude', label: 'Claude (Anthropic)' },
+  { value: 'openai', label: 'GPT (OpenAI)' },
+  { value: 'gemini', label: 'Gemini (Google)' },
+];
+
+const AI_PROVIDER_ENV_VARS: Record<AIProvider, string> = {
+  claude: 'ANTHROPIC_API_KEY',
+  openai: 'OPENAI_API_KEY',
+  gemini: 'GEMINI_API_KEY',
+};
 
 interface StepCategorySelectProps {
   selectedCategories: TestCategory[];
   onCategoriesChange: (categories: TestCategory[]) => void;
+  aiReviewVision: boolean;
+  onAIReviewVisionChange: (v: boolean) => void;
+  aiProvider: AIProvider;
+  onAIProviderChange: (provider: AIProvider) => void;
 }
 
 const ICONS: Record<string, React.ElementType> = {
@@ -19,11 +35,16 @@ const ICONS: Record<string, React.ElementType> = {
   FileCheck,
   Search,
   Image,
+  Sparkles,
 };
 
 export default function StepCategorySelect({
   selectedCategories,
   onCategoriesChange,
+  aiReviewVision,
+  onAIReviewVisionChange,
+  aiProvider,
+  onAIProviderChange,
 }: StepCategorySelectProps) {
   const allSelected = selectedCategories.length === CATEGORY_INFO.length;
 
@@ -92,6 +113,32 @@ export default function StepCategorySelect({
             </Card>
           );
         })}
+
+        {selectedCategories.includes('ai-review') && (
+          <Card className="p-4 ml-14 border-dashed">
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-[#262626] mb-1">AI Provider</label>
+              <select
+                value={aiProvider}
+                onChange={(e) => onAIProviderChange(e.target.value as AIProvider)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-[#262626] outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all bg-white"
+              >
+                {AI_PROVIDER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <Checkbox
+              checked={aiReviewVision}
+              onChange={(e) => onAIReviewVisionChange(e.target.checked)}
+              label="Vision Mode"
+              description="Send screenshots to AI for visual analysis (uses more tokens)"
+            />
+            <p className="text-xs text-gray-400 mt-2 ml-8">
+              Requires {AI_PROVIDER_ENV_VARS[aiProvider]} environment variable
+            </p>
+          </Card>
+        )}
       </div>
 
       {selectedCategories.length === 0 && (
