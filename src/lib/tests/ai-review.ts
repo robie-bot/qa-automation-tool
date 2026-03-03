@@ -1,4 +1,5 @@
-import { TestIssue, ReviewConfig, SSEEvent, TestCategory, CATEGORY_INFO } from '@/types';
+import { Page } from 'playwright-core';
+import { TestIssue, ReviewConfig, TestCategory, CATEGORY_INFO } from '@/types';
 import { getProvider, AIUserContent } from './ai-providers';
 
 interface AIFinding {
@@ -6,65 +7,97 @@ interface AIFinding {
   message: string;
 }
 
-function groupIssuesByCategory(issues: TestIssue[]): string {
-  const grouped: Record<string, TestIssue[]> = {};
-  for (const issue of issues) {
-    const catName = CATEGORY_INFO.find((c) => c.id === issue.category)?.name || issue.category;
-    if (!grouped[catName]) grouped[catName] = [];
-    grouped[catName].push(issue);
+/** Viewports to capture when vision mode is enabled */
+const VISION_VIEWPORTS = [
+  { width: 1440, label: 'Desktop (1440px)' },
+  { width: 768, label: 'Tablet (768px)' },
+  { width: 375, label: 'Mobile (375px)' },
+];
+
+function buildCategoryChecklist(selectedCategories: TestCategory[]): string {
+  const checklistItems = selectedCategories
+    .filter((id) => id !== 'ai-review') // don't include ai-review itself
+    .map((id) => {
+      const info = CATEGORY_INFO.find((c) => c.id === id);
+      if (!info) return null;
+      return `- **${info.name}**: ${info.description}`;
+    })
+    .filter(Boolean);
+
+  if (checklistItems.length === 0) {
+    // If AI review is the only category selected, use a broad default checklist
+    return [
+      '- **Layout & Responsiveness**: Check for element overlap, spacing issues, broken layouts',
+      '- **Typography**: Font sizes, readability, heading hierarchy, text contrast',
+      '- **Links & Media**: Broken images, missing alt text, navigation issues',
+      '- **Content Quality**: Placeholder text, spelling errors, inconsistent content',
+      '- **Accessibility**: Color contrast, interactive element sizing, semantic structure',
+    ].join('\n');
   }
 
-  const lines: string[] = [];
-  for (const [category, catIssues] of Object.entries(grouped)) {
-    lines.push(`\n## ${category}`);
-    const byPage: Record<string, TestIssue[]> = {};
-    for (const issue of catIssues) {
-      if (!byPage[issue.pageUrl]) byPage[issue.pageUrl] = [];
-      byPage[issue.pageUrl].push(issue);
-    }
-    for (const [page, pageIssues] of Object.entries(byPage)) {
-      lines.push(`\n### Page: ${page}`);
-      for (const issue of pageIssues) {
-        lines.push(`- [${issue.severity.toUpperCase()}] ${issue.message}`);
-      }
-    }
+  return checklistItems.join('\n');
+}
+
+async function extractPageInfo(page: Page): Promise<{
+  title: string;
+  metaDescription: string;
+  textContent: string;
+}> {
+  const result = await page.evaluate(() => {
+    const title = document.title || '';
+    const metaDesc =
+      document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+    // Get visible text, truncated to keep context reasonable
+    const text = document.body.innerText || '';
+    return { title, metaDescription: metaDesc, textContent: text };
+  });
+
+  // Truncate text content to ~30k chars to stay within token limits
+  if (result.textContent.length > 30000) {
+    result.textContent = result.textContent.substring(0, 30000) + '\n\n... (truncated)';
   }
-  return lines.join('\n');
+
+  return result;
 }
 
-function truncateForContext(summary: string, maxChars: number): string {
-  if (summary.length <= maxChars) return summary;
+async function captureScreenshots(
+  page: Page,
+  visionMode: boolean
+): Promise<Array<{ base64: string; label: string }>> {
+  const screenshots: Array<{ base64: string; label: string }> = [];
 
-  // Remove info-severity lines first to save space
-  const lines = summary.split('\n');
-  const filtered = lines.filter((line) => !line.includes('[INFO]'));
-  const result = filtered.join('\n');
-  if (result.length <= maxChars) return result;
+  if (!visionMode) {
+    // Even without vision mode, capture one full-page screenshot for reference
+    const shot = await page.screenshot({ fullPage: true, type: 'jpeg', quality: 50 });
+    screenshots.push({ base64: shot.toString('base64'), label: 'Full page' });
+    return screenshots;
+  }
 
-  return result.substring(0, maxChars) + '\n\n... (truncated)';
-}
+  // Vision mode: capture at multiple viewports
+  const originalViewport = page.viewportSize();
 
-function collectScreenshots(issues: TestIssue[], maxCount: number): Array<{ base64: string; page: string; category: string }> {
-  // Prioritize errors over warnings
-  const withScreenshots = issues.filter((i) => i.screenshot);
-  const errors = withScreenshots.filter((i) => i.severity === 'error');
-  const warnings = withScreenshots.filter((i) => i.severity === 'warning');
-  const rest = withScreenshots.filter((i) => i.severity === 'info');
+  for (const vp of VISION_VIEWPORTS) {
+    await page.setViewportSize({ width: vp.width, height: 900 });
+    await page.waitForTimeout(500); // let layout settle
 
-  const prioritized = [...errors, ...warnings, ...rest].slice(0, maxCount);
-  return prioritized.map((i) => ({
-    base64: i.screenshot!,
-    page: i.pageUrl,
-    category: i.category,
-  }));
+    const shot = await page.screenshot({ fullPage: true, type: 'jpeg', quality: 50 });
+    screenshots.push({ base64: shot.toString('base64'), label: vp.label });
+  }
+
+  // Restore original viewport
+  if (originalViewport) {
+    await page.setViewportSize(originalViewport);
+    await page.waitForTimeout(300);
+  }
+
+  return screenshots;
 }
 
 export async function runAIReviewTests(
-  targetUrl: string,
-  pages: string[],
-  existingIssues: TestIssue[],
+  page: Page,
+  pageUrl: string,
   config: ReviewConfig,
-  onEvent: (event: SSEEvent) => void
+  selectedCategories: TestCategory[]
 ): Promise<TestIssue[]> {
   const issues: TestIssue[] = [];
 
@@ -73,44 +106,32 @@ export async function runAIReviewTests(
   if (!apiKey) {
     issues.push({
       severity: 'warning',
-      message: `${provider.envVarName} environment variable is not set. AI Review requires a valid ${provider.name} API key to function. Set the key in your environment and try again.`,
+      message: `${provider.envVarName} environment variable is not set. AI Review requires ${
+        config.aiProvider === 'ollama'
+          ? 'Ollama to be running locally'
+          : `a valid ${provider.name} API key`
+      }. Set up the provider and try again.`,
       category: 'ai-review',
-      pageUrl: targetUrl,
+      pageUrl,
     });
     return issues;
   }
-
-  if (existingIssues.length === 0) {
-    issues.push({
-      severity: 'info',
-      message: 'No automated test results to analyze. AI Review works best when other test categories have been run first, so it can provide expert analysis of the findings. Consider running AI Review together with other test categories for the most useful insights.',
-      category: 'ai-review',
-      pageUrl: targetUrl,
-    });
-    return issues;
-  }
-
-  onEvent({
-    type: 'progress',
-    page: targetUrl,
-    category: 'ai-review',
-    percent: 90,
-    message: `${provider.name} is analyzing test results...`,
-  });
 
   try {
-    const issueSummary = groupIssuesByCategory(existingIssues);
-    const truncated = truncateForContext(issueSummary, 80000);
+    // 1. Extract page information
+    const pageInfo = await extractPageInfo(page);
 
-    const errorCount = existingIssues.filter((i) => i.severity === 'error').length;
-    const warningCount = existingIssues.filter((i) => i.severity === 'warning').length;
-    const infoCount = existingIssues.filter((i) => i.severity === 'info').length;
+    // 2. Capture screenshots
+    const screenshots = await captureScreenshots(page, config.aiReviewVision);
 
+    // 3. Build the category checklist
+    const checklist = buildCategoryChecklist(selectedCategories);
+
+    // 4. Assemble user content for the AI
     const userContent: AIUserContent[] = [];
 
-    // Add screenshots if vision mode enabled
+    // Add screenshots (always include at least a full-page shot in vision mode)
     if (config.aiReviewVision) {
-      const screenshots = collectScreenshots(existingIssues, 10);
       for (const screenshot of screenshots) {
         userContent.push({
           type: 'image',
@@ -119,44 +140,52 @@ export async function runAIReviewTests(
         });
         userContent.push({
           type: 'text',
-          text: `[Screenshot from page "${screenshot.page}" — ${screenshot.category} test]`,
+          text: `[Screenshot: ${screenshot.label}]`,
         });
       }
     }
 
+    // Add page context as text
     userContent.push({
       type: 'text',
-      text: `Here are the automated QA test results for ${targetUrl} (${pages.length} pages tested):
+      text: `Review this web page:
 
-Summary: ${errorCount} errors, ${warningCount} warnings, ${infoCount} info items.
+URL: ${pageUrl}
+Title: ${pageInfo.title}
+Meta Description: ${pageInfo.metaDescription || '(none)'}
 
-${truncated}
+--- Page Text Content ---
+${pageInfo.textContent}
 
-Please analyze these results and provide your expert QA assessment.`,
+--- QA Checklist ---
+Review the page against each of the following categories:
+${checklist}
+
+For each category above, identify any issues, concerns, or quality problems you find on this page. Be thorough and specific.`,
     });
 
-    const systemPrompt = `You are an expert QA engineer reviewing automated test results for a website. Analyze the findings and return a JSON array of objects, each with "severity" ("error", "warning", or "info") and "message" (string) fields.
+    // 5. System prompt
+    const systemPrompt = `You are an expert QA engineer performing an independent quality review of a web page. You are given the page content${config.aiReviewVision ? ' and screenshots at different viewport sizes' : ''}, along with a QA checklist of categories to evaluate.
 
-Your analysis should cover:
-1. **Prioritization**: Which issues are most critical and should be fixed first?
-2. **Patterns**: Are there recurring issues across pages that suggest a systemic problem?
-3. **Root Causes**: What might be causing the detected issues?
-4. **False Positives**: Flag any results that look like they might be false positives.
-5. **Recommendations**: Specific, actionable recommendations for fixing key issues.
-6. **Overall Assessment**: A summary of the website's quality based on these results.
+Your job is to review the page against each category in the checklist and identify real issues. Return a JSON array of objects, each with:
+- "severity": "error" (critical issues that must be fixed), "warning" (moderate concerns), or "info" (minor observations or suggestions)
+- "message": A clear, actionable description of the finding. Start each message with the category name in brackets, e.g. "[Layout] ..." or "[Typography] ..."
 
-Use "error" severity for critical findings, "warning" for moderate concerns, and "info" for observations and general guidance.
-
-Write clear, concise messages. Each finding should be self-contained and actionable.
+Guidelines:
+- Be specific: reference actual elements, text, or areas of the page
+- Be practical: focus on real problems a user or developer would care about
+- Cover every category in the checklist — report at least one finding per category (even if it's just an "info" confirming things look good)
+${config.aiReviewVision ? '- Use the screenshots to check visual layout, responsiveness, spacing, and design consistency across viewports' : ''}
+- Keep each finding concise (1-2 sentences)
 
 Respond ONLY with a valid JSON array. No markdown, no code fences, no additional text.`;
 
+    // 6. Call the AI
     const responseText = await provider.streamCompletion({ systemPrompt, userContent });
 
-    // Parse JSON response
+    // 7. Parse JSON response
     let findings: AIFinding[];
     try {
-      // Strip markdown code fences if present
       let jsonText = responseText.trim();
       if (jsonText.startsWith('```')) {
         jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
@@ -172,11 +201,12 @@ Respond ONLY with a valid JSON array. No markdown, no code fences, no additional
         severity: 'info',
         message: responseText,
         category: 'ai-review',
-        pageUrl: targetUrl,
+        pageUrl,
       });
       return issues;
     }
 
+    // 8. Convert findings to TestIssues
     for (const finding of findings) {
       const severity = ['error', 'warning', 'info'].includes(finding.severity)
         ? (finding.severity as 'error' | 'warning' | 'info')
@@ -186,7 +216,7 @@ Respond ONLY with a valid JSON array. No markdown, no code fences, no additional
         severity,
         message: finding.message,
         category: 'ai-review',
-        pageUrl: targetUrl,
+        pageUrl,
       });
     }
   } catch (error) {
@@ -194,7 +224,7 @@ Respond ONLY with a valid JSON array. No markdown, no code fences, no additional
       severity: 'warning',
       message: `AI Review failed: ${error instanceof Error ? error.message : 'Unknown error'}. The rest of your test results are unaffected.`,
       category: 'ai-review',
-      pageUrl: targetUrl,
+      pageUrl,
     });
   }
 

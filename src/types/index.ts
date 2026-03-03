@@ -250,8 +250,8 @@ export const CATEGORY_INFO: CategoryInfo[] = [
   {
     id: 'ai-review',
     name: 'AI Review',
-    description: 'Claude AI analyzes all test results to provide expert QA insights, prioritization, and recommendations',
+    description: 'AI visits each page and performs its own independent QA review using selected categories as a checklist',
     icon: 'Sparkles',
-    estimatedTime: '~30 sec',
+    estimatedTime: '~30 sec/page',
   },
 ];
