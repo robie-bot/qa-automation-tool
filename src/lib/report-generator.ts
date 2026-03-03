@@ -24,6 +24,7 @@ const CATEGORY_NAMES: Record<TestCategory, string> = {
   'content-check': 'Content Cross-Check',
   'text-finder': 'Text Finder',
   'images-media': 'Images & Media',
+  'ai-review': 'AI Review',
 };
 
 export async function generateReport(

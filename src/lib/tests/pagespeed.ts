@@ -1,4 +1,12 @@
-import { TestIssue, ReviewConfig } from '@/types';
+import {
+  TestIssue,
+  ReviewConfig,
+  PageSpeedData,
+  PageSpeedStrategyResult,
+  PageSpeedAudit,
+  PageSpeedMetricValue,
+  PageSpeedCategoryResult,
+} from '@/types';
 
 // PageSpeed Insights API — free tier, no key required (rate-limited to ~25 req/day)
 // Set PAGESPEED_API_KEY env var for higher limits (free key from Google Cloud Console)
@@ -8,6 +16,7 @@ interface LighthouseCategory {
   id: string;
   title: string;
   score: number | null;
+  auditRefs?: { id: string; weight: number; group?: string }[];
 }
 
 interface LighthouseAudit {
@@ -18,15 +27,14 @@ interface LighthouseAudit {
   scoreDisplayMode: string;
   displayValue?: string;
   numericValue?: number;
+  group?: string;
 }
 
 interface PSIResponse {
   lighthouseResult?: {
     categories: Record<string, LighthouseCategory>;
     audits: Record<string, LighthouseAudit>;
-    finalScreenshot?: {
-      screenshot?: { data: string };
-    };
+    categoryGroups?: Record<string, { title: string; description?: string }>;
   };
   error?: { message: string };
 }
@@ -42,6 +50,15 @@ function formatScore(score: number | null): string {
   if (score === null) return 'N/A';
   return `${Math.round(score * 100)}`;
 }
+
+const CORE_METRICS = [
+  'first-contentful-paint',
+  'largest-contentful-paint',
+  'total-blocking-time',
+  'cumulative-layout-shift',
+  'speed-index',
+  'interactive',
+];
 
 const KEY_AUDITS = [
   'first-contentful-paint',
@@ -78,11 +95,77 @@ const KEY_AUDITS = [
   'tap-targets',
 ];
 
+function extractStrategyResult(
+  lr: NonNullable<PSIResponse['lighthouseResult']>,
+  strategy: 'mobile' | 'desktop'
+): PageSpeedStrategyResult {
+  // Extract category results with auditRefs
+  const categories: Record<string, PageSpeedCategoryResult> = {};
+  for (const [key, cat] of Object.entries(lr.categories)) {
+    categories[key] = {
+      id: cat.id,
+      title: cat.title,
+      score: cat.score,
+      auditRefs: (cat.auditRefs || []).map((ref) => ({
+        id: ref.id,
+        weight: ref.weight,
+        group: ref.group,
+      })),
+    };
+  }
+
+  // Extract all audits
+  const audits: Record<string, PageSpeedAudit> = {};
+  for (const [id, audit] of Object.entries(lr.audits)) {
+    audits[id] = {
+      id: audit.id,
+      title: audit.title,
+      description: audit.description,
+      score: audit.score,
+      scoreDisplayMode: audit.scoreDisplayMode,
+      displayValue: audit.displayValue,
+      numericValue: audit.numericValue,
+    };
+  }
+
+  // Build audit group mapping from category auditRefs
+  for (const cat of Object.values(categories)) {
+    for (const ref of cat.auditRefs) {
+      if (ref.group && audits[ref.id]) {
+        audits[ref.id].group = ref.group;
+      }
+    }
+  }
+
+  // Extract core metrics
+  const metrics: PageSpeedMetricValue[] = [];
+  for (const metricId of CORE_METRICS) {
+    const audit = lr.audits[metricId];
+    if (audit) {
+      metrics.push({
+        id: audit.id,
+        title: audit.title,
+        numericValue: audit.numericValue ?? 0,
+        displayValue: audit.displayValue ?? '',
+        score: audit.score,
+      });
+    }
+  }
+
+  return { strategy, categories, audits, metrics };
+}
+
+export interface PageSpeedTestResult {
+  issues: TestIssue[];
+  data: PageSpeedData;
+}
+
 export async function runPageSpeedTests(
   pageUrl: string,
   _config: ReviewConfig
 ): Promise<TestIssue[]> {
   const issues: TestIssue[] = [];
+  const pageSpeedData: PageSpeedData = { pageUrl, mobile: null, desktop: null };
 
   // Run both mobile and desktop
   for (const strategy of ['mobile', 'desktop'] as const) {
@@ -92,9 +175,7 @@ export async function runPageSpeedTests(
         url: pageUrl,
         strategy,
         category: 'performance',
-        // The API accepts multiple category params
       });
-      // Add all categories
       params.append('category', 'accessibility');
       params.append('category', 'best-practices');
       params.append('category', 'seo');
@@ -141,13 +222,14 @@ export async function runPageSpeedTests(
         continue;
       }
 
-      // --- Category scores ---
+      // Extract structured data for rich UI
+      pageSpeedData[strategy] = extractStrategyResult(lr, strategy);
+
+      // --- Category scores (flat text for backward compat / PDF / AI review) ---
       const categories = lr.categories;
       for (const [_key, cat] of Object.entries(categories)) {
         const score = cat.score;
         const severity = scoreToSeverity(score);
-
-        // Only report non-perfect scores as warnings/errors, perfect as info
         issues.push({
           severity,
           message: `[${strategy.toUpperCase()}] ${cat.title}: ${formatScore(score)}/100`,
@@ -162,7 +244,6 @@ export async function runPageSpeedTests(
         const audit = audits[auditId];
         if (!audit) continue;
 
-        // Skip passing audits and informative/not-applicable ones
         if (
           audit.score === null ||
           audit.score >= 0.9 ||
@@ -191,6 +272,17 @@ export async function runPageSpeedTests(
         pageUrl,
       });
     }
+  }
+
+  // Add a metadata issue carrying the structured data for the rich UI
+  if (pageSpeedData.mobile || pageSpeedData.desktop) {
+    issues.push({
+      severity: 'info',
+      message: `PageSpeed Insights data collected for ${pageUrl}`,
+      category: 'pagespeed',
+      pageUrl,
+      metadata: { type: 'pagespeed-result', data: pageSpeedData },
+    });
   }
 
   return issues;

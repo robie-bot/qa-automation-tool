@@ -1,9 +1,16 @@
 'use client';
 
-import { Globe, Layers, FolderCheck, Clock, Upload, FileCheck, Search, X, Plus } from 'lucide-react';
+import { Globe, Layers, FolderCheck, Clock, Upload, FileCheck, Search, X, Plus, Sparkles } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
-import { ReviewState, CATEGORY_INFO } from '@/types';
+import { ReviewState, CATEGORY_INFO, AIProvider } from '@/types';
+
+const AI_PROVIDER_LABELS: Record<AIProvider, { name: string; envVar: string }> = {
+  claude: { name: 'Claude (Anthropic)', envVar: 'ANTHROPIC_API_KEY' },
+  openai: { name: 'GPT (OpenAI)', envVar: 'OPENAI_API_KEY' },
+  gemini: { name: 'Gemini (Google)', envVar: 'GEMINI_API_KEY' },
+  ollama: { name: 'Ollama (Local)', envVar: 'OLLAMA_MODEL' },
+};
 import { useRef, useState } from 'react';
 
 interface StepConfirmRunProps {
@@ -96,6 +103,7 @@ export default function StepConfirmRun({
   const showRefUpload = reviewState.selectedCategories.includes('color-scheme');
   const showContentDoc = reviewState.selectedCategories.includes('content-check');
   const showTextFinder = reviewState.selectedCategories.includes('text-finder');
+  const showAIReview = reviewState.selectedCategories.includes('ai-review');
 
   return (
     <div className="space-y-6">
@@ -287,6 +295,31 @@ export default function StepConfirmRun({
           )}
         </Card>
       )}
+
+      {/* AI Review config */}
+      {showAIReview && (() => {
+        const providerInfo = AI_PROVIDER_LABELS[reviewState.config.aiProvider];
+        return (
+          <Card className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Sparkles className="w-4 h-4 text-[#FF7F11]" />
+              <p className="text-sm font-medium text-[#262626]">AI Review</p>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              {providerInfo.name} will analyze all test results to provide expert QA insights, prioritization, and recommendations.
+            </p>
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span>Provider: <strong className="text-[#262626]">{providerInfo.name}</strong></span>
+              <span>Vision Mode: <strong className="text-[#262626]">{reviewState.config.aiReviewVision ? 'Enabled' : 'Disabled'}</strong></span>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              {reviewState.config.aiProvider === 'ollama'
+                ? 'Ollama must be running locally (default model: llama3.2)'
+                : `Requires ${providerInfo.envVar} environment variable`}
+            </p>
+          </Card>
+        );
+      })()}
 
       <Button onClick={onRun} loading={loading} size="lg" className="w-full">
         {loading ? 'Starting Review...' : 'Start Review'}

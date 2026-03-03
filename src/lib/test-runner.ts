@@ -1,5 +1,5 @@
 import { Browser, BrowserContext } from 'playwright-core';
-import { TestCategory, TestIssue, ReviewConfig, SSEEvent } from '@/types';
+import { TestCategory, TestIssue, ReviewConfig, SSEEvent, PageSpeedData } from '@/types';
 import { runLayoutTests } from './tests/layout';
 import { runTypographyTests } from './tests/typography';
 import { runColorSchemeTests } from './tests/color-scheme';
@@ -8,6 +8,7 @@ import { runPageSpeedTests } from './tests/pagespeed';
 import { runContentCheckTests } from './tests/content-check';
 import { runTextFinderTests } from './tests/text-finder';
 import { runImagesMediaTests } from './tests/images-media';
+import { runAIReviewTests } from './tests/ai-review';
 import { launchBrowser } from './browser';
 
 // Categories that call an external API and don't need a browser page
@@ -117,6 +118,9 @@ export async function runReview(
             case 'images-media':
               issues = await runImagesMediaTests(page, pagePath, config);
               break;
+            case 'ai-review':
+              issues = await runAIReviewTests(page, pagePath, config, categories);
+              break;
           }
 
           allIssues.push(...issues);
@@ -178,6 +182,22 @@ export async function runReview(
                 page: pagePath,
                 category,
                 message: issue.message,
+              });
+            }
+          }
+
+          // Emit structured data for pagespeed rich UI
+          if (category === 'pagespeed') {
+            const metaIssue = issues.find(
+              (i) => i.metadata && (i.metadata as Record<string, unknown>).type === 'pagespeed-result'
+            );
+            if (metaIssue?.metadata) {
+              onEvent({
+                type: 'data',
+                page: pagePath,
+                category: 'pagespeed',
+                dataType: 'pagespeed-result',
+                payload: (metaIssue.metadata as Record<string, unknown>).data as PageSpeedData,
               });
             }
           }

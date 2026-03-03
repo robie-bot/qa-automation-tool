@@ -5,27 +5,35 @@ import { XCircle, AlertTriangle, Info, Filter } from 'lucide-react';
 import Card from './ui/Card';
 import Badge from './ui/Badge';
 import Tabs from './ui/Tabs';
-import { TestIssue, ReviewSummary, TestCategory, CATEGORY_INFO } from '@/types';
+import PageSpeedResults from './PageSpeedResults';
+import { TestIssue, ReviewSummary, TestCategory, PageSpeedData, CATEGORY_INFO } from '@/types';
 
 interface ResultsDashboardProps {
   issues: TestIssue[];
   summary: ReviewSummary;
+  pageSpeedResults?: PageSpeedData[];
 }
 
-export default function ResultsDashboard({ issues, summary }: ResultsDashboardProps) {
+export default function ResultsDashboard({ issues, summary, pageSpeedResults = [] }: ResultsDashboardProps) {
   const [activeTab, setActiveTab] = useState('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const aiReviewIssues = issues.filter((i) => i.category === 'ai-review');
 
   const tabs = [
     { id: 'all', label: 'All Issues', count: summary.totalIssues },
     { id: 'error', label: 'Errors', count: summary.errors },
     { id: 'warning', label: 'Warnings', count: summary.warnings },
     { id: 'info', label: 'Info', count: summary.infos },
+    ...(aiReviewIssues.length > 0
+      ? [{ id: 'ai-review', label: 'AI Review', count: aiReviewIssues.length }]
+      : []),
   ];
 
   const filteredIssues = useMemo(() => {
     return issues.filter((issue) => {
+      if (activeTab === 'ai-review') return issue.category === 'ai-review';
       if (activeTab !== 'all' && issue.severity !== activeTab) return false;
       if (severityFilter !== 'all' && issue.severity !== severityFilter) return false;
       if (categoryFilter !== 'all' && issue.category !== categoryFilter) return false;
@@ -106,7 +114,13 @@ export default function ResultsDashboard({ issues, summary }: ResultsDashboardPr
         </div>
       </div>
 
-      {/* Issue list */}
+      {/* Rich PageSpeed view when filtered to pagespeed */}
+      {categoryFilter === 'pagespeed' && pageSpeedResults.length > 0 && (
+        <PageSpeedResults results={pageSpeedResults} />
+      )}
+
+      {/* Issue list (hidden when showing rich pagespeed view) */}
+      {!(categoryFilter === 'pagespeed' && pageSpeedResults.length > 0) && (
       <div className="space-y-2">
         {filteredIssues.length === 0 ? (
           <Card className="p-8 text-center">
@@ -130,7 +144,7 @@ export default function ResultsDashboard({ issues, summary }: ResultsDashboardPr
                       <span className="text-xs text-gray-400">@ {issue.viewport}</span>
                     )}
                   </div>
-                  <p className="text-sm text-[#262626]">{issue.message}</p>
+                  <p className={`text-sm text-[#262626] ${issue.category === 'ai-review' ? 'whitespace-pre-wrap' : ''}`}>{issue.message}</p>
                   {issue.screenshot && (
                     <div className="mt-3 rounded-lg overflow-hidden border border-gray-200">
                       <img
@@ -146,6 +160,7 @@ export default function ResultsDashboard({ issues, summary }: ResultsDashboardPr
           ))
         )}
       </div>
+      )}
     </div>
   );
 }
