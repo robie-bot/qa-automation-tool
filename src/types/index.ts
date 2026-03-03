@@ -1,6 +1,6 @@
 export type Severity = 'error' | 'warning' | 'info';
 
-export type AIProvider = 'claude' | 'openai' | 'gemini';
+export type AIProvider = 'claude' | 'openai' | 'gemini' | 'ollama';
 
 export type TestCategory = 'layout' | 'typography' | 'color-scheme' | 'broken-links' | 'pagespeed' | 'content-check' | 'text-finder' | 'images-media' | 'ai-review';
 

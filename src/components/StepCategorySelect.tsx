@@ -9,12 +9,14 @@ const AI_PROVIDER_OPTIONS: { value: AIProvider; label: string }[] = [
   { value: 'claude', label: 'Claude (Anthropic)' },
   { value: 'openai', label: 'GPT (OpenAI)' },
   { value: 'gemini', label: 'Gemini (Google)' },
+  { value: 'ollama', label: 'Ollama (Local)' },
 ];
 
 const AI_PROVIDER_ENV_VARS: Record<AIProvider, string> = {
   claude: 'ANTHROPIC_API_KEY',
   openai: 'OPENAI_API_KEY',
   gemini: 'GEMINI_API_KEY',
+  ollama: 'OLLAMA_MODEL',
 };
 
 interface StepCategorySelectProps {
@@ -135,7 +137,9 @@ export default function StepCategorySelect({
               description="Send screenshots to AI for visual analysis (uses more tokens)"
             />
             <p className="text-xs text-gray-400 mt-2 ml-8">
-              Requires {AI_PROVIDER_ENV_VARS[aiProvider]} environment variable
+              {aiProvider === 'ollama'
+                ? 'Ollama must be running locally. Set OLLAMA_MODEL to choose a model (default: llama3.2)'
+                : `Requires ${AI_PROVIDER_ENV_VARS[aiProvider]} environment variable`}
             </p>
           </Card>
         )}

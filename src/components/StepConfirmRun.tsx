@@ -9,6 +9,7 @@ const AI_PROVIDER_LABELS: Record<AIProvider, { name: string; envVar: string }> =
   claude: { name: 'Claude (Anthropic)', envVar: 'ANTHROPIC_API_KEY' },
   openai: { name: 'GPT (OpenAI)', envVar: 'OPENAI_API_KEY' },
   gemini: { name: 'Gemini (Google)', envVar: 'GEMINI_API_KEY' },
+  ollama: { name: 'Ollama (Local)', envVar: 'OLLAMA_MODEL' },
 };
 import { useRef, useState } from 'react';
 
@@ -312,7 +313,9 @@ export default function StepConfirmRun({
               <span>Vision Mode: <strong className="text-[#262626]">{reviewState.config.aiReviewVision ? 'Enabled' : 'Disabled'}</strong></span>
             </div>
             <p className="text-xs text-gray-400 mt-2">
-              Requires {providerInfo.envVar} environment variable
+              {reviewState.config.aiProvider === 'ollama'
+                ? 'Ollama must be running locally (default model: llama3.2)'
+                : `Requires ${providerInfo.envVar} environment variable`}
             </p>
           </Card>
         );
