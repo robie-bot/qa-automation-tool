@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
           const duration = Date.now() - startTime;
 
           const summary: ReviewSummary = {
-            totalIssues: allIssues.filter((i) => i.severity !== 'info').length,
+            totalIssues: allIssues.length,
             errors: allIssues.filter((i) => i.severity === 'error').length,
             warnings: allIssues.filter((i) => i.severity === 'warning').length,
             infos: allIssues.filter((i) => i.severity === 'info').length,
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
           for (const cat of categories) {
             summary.byCategory[cat] = allIssues.filter(
-              (i) => i.category === cat && i.severity !== 'info'
+              (i) => i.category === cat
             ).length;
           }
 

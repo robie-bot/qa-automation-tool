@@ -126,16 +126,14 @@ export async function runReview(
           allIssues.push(...issues);
 
           for (const issue of issues) {
-            if (issue.severity !== 'info') {
-              onEvent({
-                type: 'issue',
-                severity: issue.severity,
-                page: pagePath,
-                category,
-                message: issue.message,
-                screenshot: issue.screenshot,
-              });
-            }
+            onEvent({
+              type: 'issue',
+              severity: issue.severity,
+              page: pagePath,
+              category,
+              message: issue.message,
+              screenshot: issue.screenshot,
+            });
           }
         } catch (error) {
           onEvent({
@@ -175,15 +173,13 @@ export async function runReview(
           allIssues.push(...issues);
 
           for (const issue of issues) {
-            if (issue.severity !== 'info') {
-              onEvent({
-                type: 'issue',
-                severity: issue.severity,
-                page: pagePath,
-                category,
-                message: issue.message,
-              });
-            }
+            onEvent({
+              type: 'issue',
+              severity: issue.severity,
+              page: pagePath,
+              category,
+              message: issue.message,
+            });
           }
 
           // Emit structured data for pagespeed rich UI

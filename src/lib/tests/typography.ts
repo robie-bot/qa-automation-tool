@@ -239,6 +239,8 @@ const COMMON_MISSPELLINGS: Record<string, string> = {
 
 // ─── Main Export ────────────────────────────────────────────────────────────
 
+const MAX_SCREENSHOTS = 10;
+
 export async function runTypographyTests(
   page: Page,
   pageUrl: string,
@@ -246,6 +248,23 @@ export async function runTypographyTests(
 ): Promise<TestIssue[]> {
   const issues: TestIssue[] = [];
   const typoConfig = config.typography;
+  let screenshotCount = 0;
+
+  // Helper to capture an element screenshot by CSS selector
+  async function captureElementScreenshot(selector: string): Promise<string | undefined> {
+    if (screenshotCount >= MAX_SCREENSHOTS) return undefined;
+    try {
+      const el = page.locator(selector).first();
+      if (await el.isVisible()) {
+        const shot = await el.screenshot({ type: 'jpeg', quality: 60 });
+        screenshotCount++;
+        return shot.toString('base64');
+      }
+    } catch {
+      // Element may not be screenshotable
+    }
+    return undefined;
+  }
 
   try {
     // Set a standard viewport for typography tests
@@ -253,6 +272,7 @@ export async function runTypographyTests(
 
     // ─── Collect text data from the page ────────────────────────────────
 
+    // Tag elements with unique data attributes for reliable screenshot targeting
     const textData = await page.evaluate(() => {
       const headings: {
         tag: string;
@@ -302,6 +322,10 @@ export async function runTypographyTests(
         }
         if (bgColor === 'rgba(0, 0, 0, 0)') bgColor = 'rgb(255, 255, 255)';
 
+        // Tag with unique attribute for screenshot targeting
+        const qaId = `qa-typo-h-${headingDomIndex}`;
+        el.setAttribute('data-qa-typo', qaId);
+
         headings.push({
           tag,
           level,
@@ -311,13 +335,14 @@ export async function runTypographyTests(
           fontFamily: style.fontFamily,
           color: style.color,
           bgColor,
-          selector: `${tag}:nth-of-type(${headingDomIndex + 1})`,
+          selector: `[data-qa-typo="${qaId}"]`,
           domIndex: headingDomIndex,
         });
         headingDomIndex++;
       });
 
       // Collect body text (paragraphs and list items)
+      let bodyDomIndex = 0;
       const bodyEls = document.querySelectorAll('p, li, td, span, div');
       const seen = new Set<string>();
       bodyEls.forEach((el) => {
@@ -344,6 +369,10 @@ export async function runTypographyTests(
         }
         if (bgColor === 'rgba(0, 0, 0, 0)') bgColor = 'rgb(255, 255, 255)';
 
+        // Tag with unique attribute for screenshot targeting
+        const qaId = `qa-typo-b-${bodyDomIndex}`;
+        el.setAttribute('data-qa-typo', qaId);
+
         bodyTexts.push({
           text: text.substring(0, 200),
           fontSize: parseFloat(style.fontSize),
@@ -352,9 +381,10 @@ export async function runTypographyTests(
           bgColor,
           wordSpacing: parseFloat(style.wordSpacing) || 0,
           letterSpacing: parseFloat(style.letterSpacing) || 0,
-          selector: el.tagName.toLowerCase(),
+          selector: `[data-qa-typo="${qaId}"]`,
         });
 
+        bodyDomIndex++;
         if (bodyTexts.length > 30) return;
       });
 
@@ -411,12 +441,14 @@ export async function runTypographyTests(
       let lastLevel = 0;
       for (const h of textData.headings) {
         if (h.level > lastLevel + 1 && lastLevel > 0) {
+          const screenshot = await captureElementScreenshot(h.selector);
           issues.push({
             severity: 'warning',
             message: `Heading order issue: "${h.text}" (${h.tag}) appears after h${lastLevel} — skips to h${h.level} in document flow`,
             category: 'typography',
             pageUrl,
             selector: h.selector,
+            screenshot,
           });
         }
         lastLevel = h.level;
@@ -458,10 +490,12 @@ export async function runTypographyTests(
     for (const h of textData.headings) {
       const minSize = minSizes[h.tag];
       if (minSize && h.fontSize < minSize) {
+        const screenshot = await captureElementScreenshot(h.selector);
         issues.push({
           severity: 'warning',
           message: `${h.tag} font size (${h.fontSize}px) is below minimum (${minSize}px): "${h.text}"`,
           selector: h.selector,
+          screenshot,
           category: 'typography',
           pageUrl,
         });
@@ -484,9 +518,12 @@ export async function runTypographyTests(
 
     for (const t of textData.bodyTexts) {
       if (t.fontSize < typoConfig.bodyMinSize) {
+        const screenshot = await captureElementScreenshot(t.selector);
         issues.push({
           severity: 'warning',
           message: `Body text font size (${t.fontSize}px) is below minimum (${typoConfig.bodyMinSize}px): "${t.text.substring(0, 40)}..."`,
+          selector: t.selector,
+          screenshot,
           category: 'typography',
           pageUrl,
         });
@@ -495,9 +532,12 @@ export async function runTypographyTests(
       // Check line height ratio
       const ratio = t.lineHeight / t.fontSize;
       if (ratio < typoConfig.minLineHeightRatio) {
+        const screenshot = await captureElementScreenshot(t.selector);
         issues.push({
           severity: 'info',
           message: `Line height ratio (${ratio.toFixed(2)}) is below recommended (${typoConfig.minLineHeightRatio}): "${t.text.substring(0, 40)}..."`,
+          selector: t.selector,
+          screenshot,
           category: 'typography',
           pageUrl,
         });
@@ -520,9 +560,12 @@ export async function runTypographyTests(
 
         if (ratio < minRatio) {
           const text = 'text' in t ? t.text : '';
+          const screenshot = await captureElementScreenshot(t.selector);
           issues.push({
             severity: 'error',
             message: `Low text contrast ratio (${ratio.toFixed(2)}:1, minimum ${minRatio}:1) for text "${text.substring(0, 40)}..." — color: ${t.color} on ${t.bgColor}`,
+            selector: t.selector,
+            screenshot,
             category: 'typography',
             pageUrl,
           });
@@ -537,9 +580,12 @@ export async function runTypographyTests(
     for (const t of textData.bodyTexts) {
       // Excessive word spacing (> 8px is unusual)
       if (t.wordSpacing > 8) {
+        const screenshot = await captureElementScreenshot(t.selector);
         issues.push({
           severity: 'warning',
           message: `Excessive word-spacing (${t.wordSpacing.toFixed(1)}px) detected: "${t.text.substring(0, 40)}..."`,
+          selector: t.selector,
+          screenshot,
           category: 'typography',
           pageUrl,
         });
@@ -547,9 +593,12 @@ export async function runTypographyTests(
 
       // Negative word spacing (compresses words together)
       if (t.wordSpacing < -1) {
+        const screenshot = await captureElementScreenshot(t.selector);
         issues.push({
           severity: 'warning',
           message: `Negative word-spacing (${t.wordSpacing.toFixed(1)}px) — words may overlap: "${t.text.substring(0, 40)}..."`,
+          selector: t.selector,
+          screenshot,
           category: 'typography',
           pageUrl,
         });
@@ -557,9 +606,12 @@ export async function runTypographyTests(
 
       // Excessive letter spacing (> 5px is usually a problem)
       if (t.letterSpacing > 5) {
+        const screenshot = await captureElementScreenshot(t.selector);
         issues.push({
           severity: 'info',
           message: `High letter-spacing (${t.letterSpacing.toFixed(1)}px) detected: "${t.text.substring(0, 40)}..."`,
+          selector: t.selector,
+          screenshot,
           category: 'typography',
           pageUrl,
         });
@@ -567,9 +619,12 @@ export async function runTypographyTests(
 
       // Negative letter spacing (compresses letters)
       if (t.letterSpacing < -1) {
+        const screenshot = await captureElementScreenshot(t.selector);
         issues.push({
           severity: 'warning',
           message: `Negative letter-spacing (${t.letterSpacing.toFixed(1)}px) — characters may overlap: "${t.text.substring(0, 40)}..."`,
+          selector: t.selector,
+          screenshot,
           category: 'typography',
           pageUrl,
         });
@@ -579,9 +634,12 @@ export async function runTypographyTests(
     // Check for double/triple spaces in visible text content
     const spacingIssueTexts = textData.bodyTexts.filter((t) => /\s{3,}/.test(t.text));
     for (const t of spacingIssueTexts.slice(0, 5)) {
+      const screenshot = await captureElementScreenshot(t.selector);
       issues.push({
         severity: 'warning',
         message: `Excessive whitespace found in text: "${t.text.substring(0, 60)}..."`,
+        selector: t.selector,
+        screenshot,
         category: 'typography',
         pageUrl,
       });
@@ -590,12 +648,14 @@ export async function runTypographyTests(
     // Also check heading text for spacing issues
     for (const h of textData.headings) {
       if (/\s{3,}/.test(h.text)) {
+        const screenshot = await captureElementScreenshot(h.selector);
         issues.push({
           severity: 'warning',
           message: `Excessive whitespace in ${h.tag}: "${h.text}"`,
           category: 'typography',
           pageUrl,
           selector: h.selector,
+          screenshot,
         });
       }
     }

@@ -114,6 +114,65 @@ export async function runLayoutTests(
         });
       }
 
+      // ─── Featured image check (only at first viewport) ───────────────
+      if (width === viewports[0]) {
+        const featuredImageStatus = await page.evaluate(() => {
+          const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+          const twitterImage = document.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+
+          // Look for a large image in the top portion of the page (hero/featured)
+          const allImages = Array.from(document.querySelectorAll('img'));
+          const heroImage = allImages.find((img) => {
+            const rect = img.getBoundingClientRect();
+            return (
+              rect.width >= 300 &&
+              rect.height >= 150 &&
+              rect.top < window.innerHeight &&
+              img.naturalWidth > 0
+            );
+          });
+
+          return {
+            hasOgImage: !!ogImage && ogImage.trim().length > 0,
+            ogImage: ogImage?.substring(0, 150) || '',
+            hasTwitterImage: !!twitterImage && twitterImage.trim().length > 0,
+            hasHeroImage: !!heroImage,
+          };
+        });
+
+        if (!featuredImageStatus.hasOgImage && !featuredImageStatus.hasTwitterImage) {
+          issues.push({
+            severity: 'warning',
+            message: `No social sharing image found — missing both og:image and twitter:image meta tags`,
+            category: 'layout',
+            pageUrl,
+          });
+        } else if (!featuredImageStatus.hasOgImage) {
+          issues.push({
+            severity: 'info',
+            message: `Missing og:image meta tag (twitter:image is present)`,
+            category: 'layout',
+            pageUrl,
+          });
+        } else if (!featuredImageStatus.hasTwitterImage) {
+          issues.push({
+            severity: 'info',
+            message: `Missing twitter:image meta tag (og:image is present)`,
+            category: 'layout',
+            pageUrl,
+          });
+        }
+
+        if (!featuredImageStatus.hasHeroImage) {
+          issues.push({
+            severity: 'info',
+            message: `No large featured/hero image found in the visible viewport area`,
+            category: 'layout',
+            pageUrl,
+          });
+        }
+      }
+
       // Take viewport screenshot
       if (width === viewports[0] || width === viewports[viewports.length - 1]) {
         const screenshot = await page.screenshot({ fullPage: true, type: 'jpeg', quality: 50 });
