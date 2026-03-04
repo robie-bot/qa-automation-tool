@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { XCircle, AlertTriangle, Info, Filter } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { XCircle, AlertTriangle, Info, Filter, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import Card from './ui/Card';
 import Badge from './ui/Badge';
 import Tabs from './ui/Tabs';
@@ -18,6 +18,32 @@ export default function ResultsDashboard({ issues, summary, pageSpeedResults = [
   const [activeTab, setActiveTab] = useState('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  // Track expanded screenshots by original issue index (stable across filters)
+  const [expandedScreenshots, setExpandedScreenshots] = useState<Set<number>>(() => {
+    const initial = new Set<number>();
+    issues.forEach((issue, idx) => {
+      if ((issue.severity === 'error' || issue.severity === 'warning') && issue.screenshot) initial.add(idx);
+    });
+    return initial;
+  });
+
+  const toggleScreenshot = useCallback((issueOrigIdx: number) => {
+    setExpandedScreenshots((prev) => {
+      const next = new Set(prev);
+      if (next.has(issueOrigIdx)) next.delete(issueOrigIdx);
+      else next.add(issueOrigIdx);
+      return next;
+    });
+  }, []);
+
+  const saveScreenshot = useCallback((base64: string, issueOrigIdx: number, category: string) => {
+    const link = document.createElement('a');
+    link.href = `data:image/jpeg;base64,${base64}`;
+    link.download = `screenshot-${category}-${issueOrigIdx + 1}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, []);
 
   const aiReviewIssues = issues.filter((i) => i.category === 'ai-review');
 
@@ -31,14 +57,17 @@ export default function ResultsDashboard({ issues, summary, pageSpeedResults = [
       : []),
   ];
 
+  // Keep original index for stable screenshot expand/collapse tracking
   const filteredIssues = useMemo(() => {
-    return issues.filter((issue) => {
-      if (activeTab === 'ai-review') return issue.category === 'ai-review';
-      if (activeTab !== 'all' && issue.severity !== activeTab) return false;
-      if (severityFilter !== 'all' && issue.severity !== severityFilter) return false;
-      if (categoryFilter !== 'all' && issue.category !== categoryFilter) return false;
-      return true;
-    });
+    return issues
+      .map((issue, origIdx) => ({ ...issue, _origIdx: origIdx }))
+      .filter((issue) => {
+        if (activeTab === 'ai-review') return issue.category === 'ai-review';
+        if (activeTab !== 'all' && issue.severity !== activeTab) return false;
+        if (severityFilter !== 'all' && issue.severity !== severityFilter) return false;
+        if (categoryFilter !== 'all' && issue.category !== categoryFilter) return false;
+        return true;
+      });
   }, [issues, activeTab, severityFilter, categoryFilter]);
 
   const severityIcon = (severity: string) => {
@@ -127,8 +156,14 @@ export default function ResultsDashboard({ issues, summary, pageSpeedResults = [
             <p className="text-gray-400 text-sm">No issues match the current filters.</p>
           </Card>
         ) : (
-          filteredIssues.map((issue, idx) => (
-            <Card key={idx} className="p-4">
+          filteredIssues.map((issue) => {
+            const origIdx = issue._origIdx;
+            const isExpanded = expandedScreenshots.has(origIdx);
+            const hasScreenshot = !!issue.screenshot;
+            const isErrorOrWarning = issue.severity === 'error' || issue.severity === 'warning';
+
+            return (
+            <Card key={origIdx} className={`p-4 ${isErrorOrWarning && hasScreenshot ? 'border-l-4 ' + (issue.severity === 'error' ? 'border-l-[#E53E3E]' : 'border-l-[#FF7F11]') : ''}`}>
               <div className="flex items-start gap-3">
                 {severityIcon(issue.severity)}
                 <div className="flex-1 min-w-0">
@@ -145,19 +180,40 @@ export default function ResultsDashboard({ issues, summary, pageSpeedResults = [
                     )}
                   </div>
                   <p className={`text-sm text-[#262626] ${issue.category === 'ai-review' ? 'whitespace-pre-wrap' : ''}`}>{issue.message}</p>
-                  {issue.screenshot && (
-                    <div className="mt-3 rounded-lg overflow-hidden border border-gray-200">
-                      <img
-                        src={`data:image/jpeg;base64,${issue.screenshot}`}
-                        alt="Issue screenshot"
-                        className="w-full max-h-48 object-cover"
-                      />
+                  {hasScreenshot && (
+                    <div className="mt-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <button
+                          onClick={() => toggleScreenshot(origIdx)}
+                          className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#262626] transition-colors"
+                        >
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          {isExpanded ? 'Collapse' : 'View'} Screenshot
+                        </button>
+                        <button
+                          onClick={() => saveScreenshot(issue.screenshot!, origIdx, issue.category)}
+                          className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#FF7F11] transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Save
+                        </button>
+                      </div>
+                      {isExpanded && (
+                        <div className="rounded-lg overflow-hidden border border-gray-200 cursor-pointer" onClick={() => toggleScreenshot(origIdx)}>
+                          <img
+                            src={`data:image/jpeg;base64,${issue.screenshot}`}
+                            alt="Issue screenshot"
+                            className="w-full object-contain max-h-96"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
       )}
