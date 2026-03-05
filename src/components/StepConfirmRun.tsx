@@ -34,6 +34,10 @@ export default function StepConfirmRun({
   const docInputRef = useRef<HTMLInputElement>(null);
   const [refImageName, setRefImageName] = useState('');
   const [newTerm, setNewTerm] = useState('');
+  const [uploadError, setUploadError] = useState('');
+
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_DOC_SIZE = 20 * 1024 * 1024; // 20MB
 
   const categoryNames = reviewState.selectedCategories
     .map((id) => CATEGORY_INFO.find((c) => c.id === id)?.name || id)
@@ -47,6 +51,14 @@ export default function StepConfirmRun({
   const handleRefImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadError('');
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setUploadError(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 10MB.`);
+      e.target.value = '';
+      return;
+    }
+
     setRefImageName(file.name);
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -60,6 +72,14 @@ export default function StepConfirmRun({
   const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadError('');
+
+    if (file.size > MAX_DOC_SIZE) {
+      setUploadError(`Document too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 20MB.`);
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result as ArrayBuffer;
@@ -320,6 +340,12 @@ export default function StepConfirmRun({
           </Card>
         );
       })()}
+
+      {uploadError && (
+        <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">
+          {uploadError}
+        </div>
+      )}
 
       <Button onClick={onRun} loading={loading} size="lg" className="w-full">
         {loading ? 'Starting Review...' : 'Start Review'}

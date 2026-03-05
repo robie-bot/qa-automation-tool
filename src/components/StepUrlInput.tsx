@@ -22,9 +22,19 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
   const [fileName, setFileName] = useState('');
   const [sitemapContent, setSitemapContent] = useState('');
 
+  const MAX_SITEMAP_SIZE = 5 * 1024 * 1024; // 5MB
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_SITEMAP_SIZE) {
+      setError(`Sitemap too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 5MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (ev) => {
