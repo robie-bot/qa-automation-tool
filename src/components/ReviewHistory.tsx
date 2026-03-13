@@ -50,7 +50,8 @@ export default function ReviewHistory() {
     }
   };
 
-  const formatDuration = (ms: number) => {
+  const formatDuration = (ms: number | null | undefined) => {
+    if (!ms || isNaN(ms) || ms <= 0) return '—';
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     return `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
@@ -81,8 +82,8 @@ export default function ReviewHistory() {
 
   if (loading && reviews.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-        <p className="text-sm text-gray-400">Loading review history...</p>
+      <div className="bg-surface rounded-xl border border-b p-8 text-center">
+        <p className="text-sm text-t-tertiary">Loading review history...</p>
       </div>
     );
   }
@@ -93,20 +94,26 @@ export default function ReviewHistory() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-[#262626] mb-4">Recent Reviews</h2>
+      <h2 className="text-lg font-semibold text-t-primary mb-4">Recent Reviews</h2>
       <div className="space-y-3">
         {reviews.map((review) => (
           <div
             key={review.id}
-            className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow"
+            className="bg-surface rounded-xl border border-b p-4 hover:shadow-sm transition-shadow"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <ExternalLink className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <p className="text-sm font-medium text-[#262626] truncate">
-                    {getHostname(review.targetUrl)}
-                  </p>
+                  <a
+                    href={review.targetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm font-medium text-t-primary hover:text-blue-600 transition-colors truncate"
+                    title={review.targetUrl}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-t-tertiary flex-shrink-0" />
+                    <span className="truncate">{getHostname(review.targetUrl)}</span>
+                  </a>
                   <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                     review.status === 'completed'
                       ? 'bg-green-50 text-green-600'
@@ -118,9 +125,9 @@ export default function ReviewHistory() {
                   </span>
                 </div>
 
-                <p className="text-xs text-gray-400 truncate mb-2">{review.targetUrl}</p>
+                <p className="text-xs text-t-tertiary truncate mb-2">{review.targetUrl}</p>
 
-                <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-4 text-xs text-t-secondary">
                   <span className="flex items-center gap-1">
                     <AlertCircle className="w-3 h-3 text-red-500" />
                     {review.errors}
@@ -134,22 +141,24 @@ export default function ReviewHistory() {
                     {review.infos}
                   </span>
                   <span className="text-gray-300">|</span>
-                  <span>{review.pagesReviewed} pages</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatDuration(review.duration)}
-                  </span>
+                  <span>{review.pagesReviewed || 0} pages</span>
+                  {review.duration ? (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatDuration(review.duration)}
+                    </span>
+                  ) : null}
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs text-gray-400">{formatDate(review.createdAt)}</span>
+                <span className="text-xs text-t-tertiary">{formatDate(review.createdAt)}</span>
                 <a
                   href={`/api/reports/${review.id}`}
                   className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                   title="Download PDF report"
                 >
-                  <Download className="w-4 h-4 text-gray-400" />
+                  <Download className="w-4 h-4 text-t-tertiary" />
                 </a>
               </div>
             </div>
@@ -160,7 +169,7 @@ export default function ReviewHistory() {
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-t-tertiary">
             {pagination.total} total reviews
           </p>
           <div className="flex items-center gap-2">
@@ -169,9 +178,9 @@ export default function ReviewHistory() {
               disabled={page <= 1}
               className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
+              <ChevronLeft className="w-4 h-4 text-t-secondary" />
             </button>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-t-secondary">
               {page} / {pagination.totalPages}
             </span>
             <button
@@ -179,7 +188,7 @@ export default function ReviewHistory() {
               disabled={page >= pagination.totalPages}
               className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+              <ChevronRight className="w-4 h-4 text-t-secondary" />
             </button>
           </div>
         </div>

@@ -17,7 +17,7 @@ interface TabsProps {
 
 export default function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
   return (
-    <div className={cn('flex border-b border-gray-200', className)}>
+    <div className={cn('flex border-b border-b', className)}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -26,7 +26,7 @@ export default function Tabs({ tabs, activeTab, onChange, className }: TabsProps
             'px-4 py-2.5 text-sm font-medium transition-all duration-200 border-b-2 -mb-px',
             activeTab === tab.id
               ? 'border-[#FF7F11] text-[#FF7F11]'
-              : 'border-transparent text-gray-500 hover:text-[#262626] hover:border-gray-300'
+              : 'border-transparent text-t-tertiary hover:text-t-primary hover:border-b'
           )}
         >
           {tab.label}
@@ -34,7 +34,7 @@ export default function Tabs({ tabs, activeTab, onChange, className }: TabsProps
             <span
               className={cn(
                 'ml-2 rounded-full px-2 py-0.5 text-xs',
-                activeTab === tab.id ? 'bg-[#FF7F11]/10 text-[#FF7F11]' : 'bg-gray-100 text-gray-500'
+                activeTab === tab.id ? 'bg-[#FF7F11]/10 text-[#FF7F11]' : 'bg-surface-secondary text-t-tertiary'
               )}
             >
               {tab.count}

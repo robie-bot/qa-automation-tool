@@ -21,14 +21,14 @@ export default function Progress({ value, max = 100, className, size = 'md', sho
 
   return (
     <div className={cn('w-full', className)}>
-      <div className={cn('w-full bg-gray-200 rounded-full overflow-hidden', sizes[size])}>
+      <div className={cn('w-full bg-surface-secondary rounded-full overflow-hidden', sizes[size])}>
         <div
           className="h-full bg-[#FF7F11] rounded-full transition-all duration-500 ease-out"
           style={{ width: `${percent}%` }}
         />
       </div>
       {showLabel && (
-        <p className="text-xs text-gray-500 mt-1 text-right">{Math.round(percent)}%</p>
+        <p className="text-xs text-t-secondary mt-1 text-right">{Math.round(percent)}%</p>
       )}
     </div>
   );

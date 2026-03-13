@@ -129,19 +129,19 @@ export default function SettingsPage() {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-3xl font-bold text-[#262626]">Settings</h1>
-        <p className="text-gray-500 mt-2">Manage your API keys and review preferences.</p>
+        <h1 className="text-3xl font-bold text-t-primary">Settings</h1>
+        <p className="text-t-secondary mt-2">Manage your API keys and review preferences.</p>
       </div>
 
       {/* API Keys Section */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      <div className="bg-surface rounded-2xl border border-b p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-[#FF7F11]/10 flex items-center justify-center">
             <Key className="w-5 h-5 text-[#FF7F11]" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-[#262626]">API Keys</h2>
-            <p className="text-xs text-gray-500">Your keys are encrypted and stored securely.</p>
+            <h2 className="text-lg font-semibold text-t-primary">API Keys</h2>
+            <p className="text-xs text-t-secondary">Your keys are encrypted and stored securely.</p>
           </div>
         </div>
 
@@ -149,19 +149,19 @@ export default function SettingsPage() {
         {apiKeys.length > 0 && (
           <div className="space-y-2 mb-6">
             {apiKeys.map((key) => (
-              <div key={key.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
+              <div key={key.id} className="flex items-center justify-between bg-surface-secondary rounded-lg px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-[#262626]">
+                  <p className="text-sm font-medium text-t-primary">
                     {AI_PROVIDERS.find(p => p.id === key.provider)?.name || key.provider}
                   </p>
-                  <p className="text-xs text-gray-400 font-mono">{key.maskedKey}</p>
+                  <p className="text-xs text-t-tertiary font-mono">{key.maskedKey}</p>
                 </div>
                 <button
                   onClick={() => deleteApiKey(key.provider)}
                   className="p-1.5 rounded-lg hover:bg-red-50 transition-colors"
                   title="Remove key"
                 >
-                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                  <Trash2 className="w-4 h-4 text-t-tertiary hover:text-red-500" />
                 </button>
               </div>
             ))}
@@ -174,7 +174,7 @@ export default function SettingsPage() {
             <select
               value={newKeyProvider}
               onChange={(e) => setNewKeyProvider(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-[#262626] outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
+              className="rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-sm text-t-primary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
             >
               {AI_PROVIDERS.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -186,11 +186,11 @@ export default function SettingsPage() {
                 value={newKeyValue}
                 onChange={(e) => setNewKeyValue(e.target.value)}
                 placeholder={`Enter ${AI_PROVIDERS.find(p => p.id === newKeyProvider)?.envVar || 'API key'}...`}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-sm text-[#262626] placeholder:text-gray-400 outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-sm text-t-primary placeholder:text-t-tertiary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
               />
               <button
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-t-tertiary hover:text-gray-600"
               >
                 {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -215,27 +215,27 @@ export default function SettingsPage() {
       </div>
 
       {/* Default Settings Section */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      <div className="bg-surface rounded-2xl border border-b p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
             <Settings className="w-5 h-5 text-blue-500" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-[#262626]">Review Defaults</h2>
-            <p className="text-xs text-gray-500">Configure default settings for new reviews.</p>
+            <h2 className="text-lg font-semibold text-t-primary">Review Defaults</h2>
+            <p className="text-xs text-t-secondary">Configure default settings for new reviews.</p>
           </div>
         </div>
 
         <div className="space-y-5">
           {/* Default AI Provider */}
           <div>
-            <label className="block text-sm font-medium text-[#262626] mb-1.5">
+            <label className="block text-sm font-medium text-t-primary mb-1.5">
               Default AI Provider
             </label>
             <select
               value={settings.defaultProvider}
               onChange={(e) => setSettings({ ...settings, defaultProvider: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-[#262626] outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
+              className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-sm text-t-primary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
             >
               {AI_PROVIDERS.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -245,9 +245,9 @@ export default function SettingsPage() {
 
           {/* Default Viewports */}
           <div>
-            <label className="block text-sm font-medium text-[#262626] mb-1.5">
+            <label className="block text-sm font-medium text-t-primary mb-1.5">
               <span className="flex items-center gap-2">
-                <Monitor className="w-4 h-4 text-gray-400" />
+                <Monitor className="w-4 h-4 text-t-tertiary" />
                 Default Viewports
               </span>
             </label>
@@ -256,16 +256,16 @@ export default function SettingsPage() {
               value={settings.defaultViewports}
               onChange={(e) => setSettings({ ...settings, defaultViewports: e.target.value })}
               placeholder="1920,1440,1024,768,375"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-[#262626] placeholder:text-gray-400 outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
+              className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-sm text-t-primary placeholder:text-t-tertiary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20"
             />
-            <p className="text-xs text-gray-400 mt-1">Comma-separated viewport widths in pixels</p>
+            <p className="text-xs text-t-tertiary mt-1">Comma-separated viewport widths in pixels</p>
           </div>
 
           {/* AI Vision Mode */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-[#262626]">AI Review Vision Mode</p>
-              <p className="text-xs text-gray-500">Send screenshots to AI for visual analysis (uses more tokens)</p>
+              <p className="text-sm font-medium text-t-primary">AI Review Vision Mode</p>
+              <p className="text-xs text-t-secondary">Send screenshots to AI for visual analysis (uses more tokens)</p>
             </div>
             <button
               onClick={() => setSettings({ ...settings, aiReviewVision: !settings.aiReviewVision })}

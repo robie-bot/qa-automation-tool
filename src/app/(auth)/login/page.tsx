@@ -39,12 +39,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-      <h2 className="text-xl font-semibold text-[#262626] mb-6">Sign In</h2>
+    <div className="bg-surface rounded-2xl shadow-sm border border-b p-8">
+      <h2 className="text-xl font-semibold text-t-primary mb-6">Sign In</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-[#262626] mb-1.5">
+          <label htmlFor="email" className="block text-sm font-medium text-t-primary mb-1.5">
             Email
           </label>
           <input
@@ -54,12 +54,12 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-[#262626] placeholder:text-gray-400 outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all"
+            className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-sm text-t-primary placeholder:text-t-tertiary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-[#262626] mb-1.5">
+          <label htmlFor="password" className="block text-sm font-medium text-t-primary mb-1.5">
             Password
           </label>
           <input
@@ -70,7 +70,7 @@ export default function LoginPage() {
             placeholder="Enter your password"
             required
             minLength={8}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-[#262626] placeholder:text-gray-400 outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all"
+            className="w-full rounded-lg border border-input-border bg-input-bg px-3 py-2.5 text-sm text-t-primary placeholder:text-t-tertiary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all"
           />
         </div>
 
@@ -89,7 +89,7 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="text-sm text-gray-500 mt-6 text-center">
+      <p className="text-sm text-t-secondary mt-6 text-center">
         Don&apos;t have an account?{' '}
         <a href="/register" className="text-[#FF7F11] font-medium hover:underline">
           Create one

@@ -45,8 +45,8 @@ export default function StepReviewScope({ scope, onScopeChange, pageCount }: Ste
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[#262626]">Choose Review Scope</h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <h2 className="text-xl font-semibold text-t-primary">Choose Review Scope</h2>
+        <p className="text-sm text-t-secondary mt-1">
           Select how you want to scope this review.
         </p>
       </div>
@@ -62,13 +62,13 @@ export default function StepReviewScope({ scope, onScopeChange, pageCount }: Ste
           >
             <div className="flex items-start gap-4">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
-                scope === option.id ? 'bg-[#FF7F11]/10' : 'bg-gray-100'
+                scope === option.id ? 'bg-[#FF7F11]/10' : 'bg-surface-secondary'
               }`}>
                 {option.emoji}
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-[#262626]">{option.title}</h3>
-                <p className="text-xs text-gray-500 mt-1">{option.description}</p>
+                <h3 className="text-sm font-semibold text-t-primary">{option.title}</h3>
+                <p className="text-xs text-t-secondary mt-1">{option.description}</p>
               </div>
             </div>
           </Card>

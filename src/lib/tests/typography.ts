@@ -238,6 +238,165 @@ const COMMON_MISSPELLINGS: Record<string, string> = {
   'waranty': 'warranty',
 };
 
+// ─── Cross-Page Consistency Types ────────────────────────────────────────────
+
+export interface TypographyFingerprint {
+  pageUrl: string;
+  headingStyles: {
+    tag: string;
+    avgFontSize: number;
+    fontFamily: string;
+    fontWeight: string;
+    count: number;
+  }[];
+  bodyStyle: {
+    avgFontSize: number;
+    fontFamily: string;
+    avgLineHeightRatio: number;
+    sampleCount: number;
+  } | null;
+  fontFamiliesUsed: string[];
+}
+
+/**
+ * Compare typography fingerprints across multiple pages and produce
+ * cross-page consistency issues.
+ */
+export function compareTypographyAcrossPages(
+  fingerprints: TypographyFingerprint[]
+): TestIssue[] {
+  if (fingerprints.length < 2) return [];
+
+  const issues: TestIssue[] = [];
+
+  // ── 1. Body font family consistency ──────────────────────────────────
+  const bodyFamilies = fingerprints
+    .filter((f) => f.bodyStyle)
+    .map((f) => ({ pageUrl: f.pageUrl, family: normalizeFontFamily(f.bodyStyle!.fontFamily) }));
+
+  if (bodyFamilies.length >= 2) {
+    const uniqueFamilies = [...new Set(bodyFamilies.map((b) => b.family))];
+    if (uniqueFamilies.length > 1) {
+      const details = bodyFamilies
+        .map((b) => `${b.pageUrl} → ${b.family}`)
+        .join('; ');
+      issues.push({
+        severity: 'warning',
+        message: `Inconsistent body font-family across pages: ${uniqueFamilies.join(' vs ')}. Details: ${details}`,
+        category: 'typography',
+        pageUrl: '(cross-page)',
+      });
+    }
+  }
+
+  // ── 2. Body font size consistency ────────────────────────────────────
+  const bodySizes = fingerprints
+    .filter((f) => f.bodyStyle)
+    .map((f) => ({ pageUrl: f.pageUrl, size: f.bodyStyle!.avgFontSize }));
+
+  if (bodySizes.length >= 2) {
+    const min = Math.min(...bodySizes.map((b) => b.size));
+    const max = Math.max(...bodySizes.map((b) => b.size));
+    if (max - min > 2) {
+      const details = bodySizes
+        .map((b) => `${b.pageUrl} → ${b.size.toFixed(1)}px`)
+        .join('; ');
+      issues.push({
+        severity: 'warning',
+        message: `Body text font-size varies by ${(max - min).toFixed(1)}px across pages (${min.toFixed(1)}px – ${max.toFixed(1)}px). Details: ${details}`,
+        category: 'typography',
+        pageUrl: '(cross-page)',
+      });
+    }
+  }
+
+  // ── 3. Body line-height ratio consistency ────────────────────────────
+  const bodyRatios = fingerprints
+    .filter((f) => f.bodyStyle)
+    .map((f) => ({ pageUrl: f.pageUrl, ratio: f.bodyStyle!.avgLineHeightRatio }));
+
+  if (bodyRatios.length >= 2) {
+    const min = Math.min(...bodyRatios.map((b) => b.ratio));
+    const max = Math.max(...bodyRatios.map((b) => b.ratio));
+    if (max - min > 0.3) {
+      const details = bodyRatios
+        .map((b) => `${b.pageUrl} → ${b.ratio.toFixed(2)}`)
+        .join('; ');
+      issues.push({
+        severity: 'info',
+        message: `Body line-height ratio varies across pages (${min.toFixed(2)} – ${max.toFixed(2)}). Details: ${details}`,
+        category: 'typography',
+        pageUrl: '(cross-page)',
+      });
+    }
+  }
+
+  // ── 4. Heading font-family consistency per level ─────────────────────
+  const headingLevels = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  for (const tag of headingLevels) {
+    const entries = fingerprints
+      .map((f) => {
+        const h = f.headingStyles.find((s) => s.tag === tag);
+        return h ? { pageUrl: f.pageUrl, family: normalizeFontFamily(h.fontFamily), size: h.avgFontSize } : null;
+      })
+      .filter((e): e is { pageUrl: string; family: string; size: number } => e !== null);
+
+    if (entries.length < 2) continue;
+
+    // Font family mismatch
+    const uniqueFamilies = [...new Set(entries.map((e) => e.family))];
+    if (uniqueFamilies.length > 1) {
+      const details = entries.map((e) => `${e.pageUrl} → ${e.family}`).join('; ');
+      issues.push({
+        severity: 'warning',
+        message: `${tag} font-family inconsistency across pages: ${uniqueFamilies.join(' vs ')}. Details: ${details}`,
+        category: 'typography',
+        pageUrl: '(cross-page)',
+      });
+    }
+
+    // Font size mismatch (>2px difference)
+    const min = Math.min(...entries.map((e) => e.size));
+    const max = Math.max(...entries.map((e) => e.size));
+    if (max - min > 2) {
+      const details = entries.map((e) => `${e.pageUrl} → ${e.size.toFixed(1)}px`).join('; ');
+      issues.push({
+        severity: 'warning',
+        message: `${tag} font-size varies by ${(max - min).toFixed(1)}px across pages (${min.toFixed(1)}px – ${max.toFixed(1)}px). Details: ${details}`,
+        category: 'typography',
+        pageUrl: '(cross-page)',
+      });
+    }
+  }
+
+  // ── 5. Overall font-family count ─────────────────────────────────────
+  const allFamilies = new Set<string>();
+  for (const f of fingerprints) {
+    for (const fam of f.fontFamiliesUsed) {
+      allFamilies.add(normalizeFontFamily(fam));
+    }
+  }
+  if (allFamilies.size > 4) {
+    issues.push({
+      severity: 'info',
+      message: `${allFamilies.size} different font families detected across all pages: ${[...allFamilies].join(', ')}. Consider consolidating for consistency.`,
+      category: 'typography',
+      pageUrl: '(cross-page)',
+    });
+  }
+
+  return issues;
+}
+
+/**
+ * Normalize font family string for comparison.
+ * Extracts the primary font (first in the stack) and lowercases it.
+ */
+function normalizeFontFamily(family: string): string {
+  const first = family.split(',')[0].trim().replace(/["']/g, '').toLowerCase();
+  return first || family.toLowerCase();
+}
+
 // ─── Main Export ────────────────────────────────────────────────────────────
 
 const MAX_SCREENSHOTS = 10;
@@ -246,10 +405,16 @@ export async function runTypographyTests(
   page: Page,
   pageUrl: string,
   config: ReviewConfig
-): Promise<TestIssue[]> {
+): Promise<{ issues: TestIssue[]; fingerprint: TypographyFingerprint }> {
   const issues: TestIssue[] = [];
   const typoConfig = config.typography;
   let screenshotCount = 0;
+  let fingerprint: TypographyFingerprint = {
+    pageUrl,
+    headingStyles: [],
+    bodyStyle: null,
+    fontFamiliesUsed: [],
+  };
 
   // Helper to capture an element screenshot by CSS selector
   async function captureElementScreenshot(selector: string): Promise<string | undefined> {
@@ -284,6 +449,7 @@ export async function runTypographyTests(
         text: string;
         fontSize: number;
         lineHeight: number;
+        fontFamily: string;
         color: string;
         bgColor: string;
         wordSpacing: number;
@@ -370,6 +536,7 @@ export async function runTypographyTests(
           text: text.substring(0, 200),
           fontSize: parseFloat(style.fontSize),
           lineHeight: parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2,
+          fontFamily: style.fontFamily,
           color: style.color,
           bgColor,
           wordSpacing: parseFloat(style.wordSpacing) || 0,
@@ -725,6 +892,52 @@ export async function runTypographyTests(
         });
       }
     }
+    // ═══════════════════════════════════════════════════════════════════════
+    // BUILD FINGERPRINT for cross-page comparison
+    // ═══════════════════════════════════════════════════════════════════════
+
+    const headingStyleMap: Record<string, { sizes: number[]; families: string[]; weights: string[] }> = {};
+    for (const h of textData.headings) {
+      if (!headingStyleMap[h.tag]) headingStyleMap[h.tag] = { sizes: [], families: [], weights: [] };
+      headingStyleMap[h.tag].sizes.push(h.fontSize);
+      headingStyleMap[h.tag].families.push(h.fontFamily);
+      // fontWeight is not currently collected — we'll use fontFamily as proxy
+      headingStyleMap[h.tag].weights.push('');
+    }
+
+    const headingStyles = Object.entries(headingStyleMap).map(([tag, data]) => ({
+      tag,
+      avgFontSize: data.sizes.reduce((a, b) => a + b, 0) / data.sizes.length,
+      fontFamily: mostCommon(data.families),
+      fontWeight: mostCommon(data.weights),
+      count: data.sizes.length,
+    }));
+
+    let bodyStyle: TypographyFingerprint['bodyStyle'] = null;
+    if (textData.bodyTexts.length > 0) {
+      const sizes = textData.bodyTexts.map((t) => t.fontSize);
+      const families = textData.bodyTexts.map((t) => t.fontFamily);
+      const ratios = textData.bodyTexts.map((t) => t.lineHeight / t.fontSize);
+      bodyStyle = {
+        avgFontSize: sizes.reduce((a, b) => a + b, 0) / sizes.length,
+        fontFamily: mostCommon(families.filter(Boolean)) || 'unknown',
+        avgLineHeightRatio: ratios.reduce((a, b) => a + b, 0) / ratios.length,
+        sampleCount: textData.bodyTexts.length,
+      };
+    }
+
+    const allFamilies = [
+      ...textData.headings.map((h) => h.fontFamily),
+      ...textData.bodyTexts.map((t) => t.fontFamily),
+    ];
+    const fontFamiliesUsed = [...new Set(allFamilies.map((f) => f.split(',')[0].trim().replace(/["']/g, '')))].filter(Boolean);
+
+    fingerprint = {
+      pageUrl,
+      headingStyles,
+      bodyStyle,
+      fontFamiliesUsed,
+    };
   } catch (error) {
     issues.push({
       severity: 'warning',
@@ -734,5 +947,13 @@ export async function runTypographyTests(
     });
   }
 
-  return issues;
+  return { issues, fingerprint };
+}
+
+/** Return the most common string in an array */
+function mostCommon(arr: string[]): string {
+  if (arr.length === 0) return '';
+  const counts: Record<string, number> = {};
+  for (const s of arr) counts[s] = (counts[s] || 0) + 1;
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 }

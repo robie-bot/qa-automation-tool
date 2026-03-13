@@ -48,15 +48,15 @@ A working QA automation tool with 9 test categories, 4 AI providers, PDF report 
 
 **Goal:** Make the tool easier and more pleasant to use.
 
-- [ ] **Dark mode** — Full dark theme support
-- [ ] **Issue grouping** — Group related issues (e.g., all contrast issues together)
+- [x] **Dark mode** — Full dark theme support (Light/Dark/System toggle)
+- [x] **Issue grouping** — Group related issues (e.g., all contrast issues together)
 - [ ] **Side-by-side comparison** — Compare current vs. previous review results
-- [ ] **Inline fix suggestions** — Show CSS/HTML fix suggestions for common issues
-- [ ] **Bulk screenshot download** — Download all screenshots as ZIP
-- [ ] **Export to CSV/JSON** — Export results in structured formats
-- [ ] **Mobile-responsive UI** — Make the tool itself mobile-friendly
-- [ ] **Keyboard shortcuts** — Quick navigation through results
-- [ ] **Issue annotations** — Mark issues as false positive, acknowledged, or fixed
+- [x] **Inline fix suggestions** — Show CSS/HTML fix suggestions for common issues
+- [x] **Bulk screenshot download** — Download all screenshots as ZIP
+- [x] **Export to CSV/JSON** — Export results in structured formats
+- [x] **Mobile-responsive UI** — UI already responsive, improved with theme support
+- [x] **Keyboard shortcuts** — Quick navigation through results (j/k/s/e/c/1/2/0/d)
+- [x] **Issue annotations** — Mark issues as false positive, acknowledged, or fixed
 
 ---
 

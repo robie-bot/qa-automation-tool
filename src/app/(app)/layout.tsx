@@ -1,6 +1,9 @@
 import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import SidebarLogout from '@/components/SidebarLogout';
+import ThemeToggle from '@/components/ThemeToggle';
+import MobileSidebar from '@/components/MobileSidebar';
+import { Home, ClipboardCheck, Settings as SettingsIcon } from 'lucide-react';
 
 export default async function AppLayout({
   children,
@@ -15,9 +18,9 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#262626] text-white flex-shrink-0 hidden lg:flex flex-col">
-        <div className="p-6 border-b border-white/10">
+      {/* Desktop Sidebar — visible at lg (1024px) and up */}
+      <aside className="w-64 bg-sidebar-bg text-white flex-shrink-0 hidden lg:flex flex-col">
+        <div className="p-6 border-b border-sidebar-border">
           <h1 className="text-lg font-bold tracking-tight">
             <span className="text-[#FF7F11]">QA</span> Automation
           </h1>
@@ -30,9 +33,7 @@ export default async function AppLayout({
                 href="/"
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
+                <Home className="w-4 h-4" />
                 Dashboard
               </a>
             </li>
@@ -41,9 +42,7 @@ export default async function AppLayout({
                 href="/review"
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
+                <ClipboardCheck className="w-4 h-4" />
                 New Review
               </a>
             </li>
@@ -52,16 +51,16 @@ export default async function AppLayout({
                 href="/settings"
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <SettingsIcon className="w-4 h-4" />
                 Settings
               </a>
             </li>
           </ul>
         </nav>
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-sidebar-border">
+          <div className="mb-3">
+            <ThemeToggle />
+          </div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-[#FF7F11] flex items-center justify-center text-xs font-bold uppercase">
               {user.email[0]}
@@ -76,19 +75,10 @@ export default async function AppLayout({
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen">
-        {/* Mobile header */}
-        <header className="lg:hidden bg-[#262626] text-white px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold">
-            <span className="text-[#FF7F11]">QA</span> Automation
-          </h1>
-          <nav className="flex gap-4 items-center">
-            <a href="/" className="text-sm text-gray-300 hover:text-white">Dashboard</a>
-            <a href="/review" className="text-sm text-gray-300 hover:text-white">Review</a>
-            <a href="/settings" className="text-sm text-gray-300 hover:text-white">Settings</a>
-            <SidebarLogout mobile />
-          </nav>
-        </header>
+      <main className="flex-1 min-h-screen bg-background">
+        {/* Mobile slide-out sidebar + hamburger header — below lg (1024px) */}
+        <MobileSidebar userEmail={user.email} userName={user.name || null} />
+
         <div className="p-6 lg:p-10 max-w-5xl mx-auto">
           {children}
         </div>

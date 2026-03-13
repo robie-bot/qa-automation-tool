@@ -6,10 +6,10 @@ export default function Home() {
     <div className="space-y-10">
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold text-[#262626]">
+        <h1 className="text-3xl font-bold text-t-primary">
           Website QA Dashboard
         </h1>
-        <p className="text-gray-500 mt-2 max-w-2xl">
+        <p className="text-t-secondary mt-2 max-w-2xl">
           Run scoped website reviews — choose specific test categories, specific pages,
           or a full site review. Get detailed reports with screenshots.
         </p>
@@ -37,7 +37,7 @@ export default function Home() {
 
       {/* Test categories overview */}
       <div>
-        <h2 className="text-lg font-semibold text-[#262626] mb-4">Test Categories</h2>
+        <h2 className="text-lg font-semibold text-t-primary mb-4">Test Categories</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             {
@@ -91,15 +91,15 @@ export default function Home() {
           ].map((cat) => (
             <div
               key={cat.title}
-              className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition-shadow"
+              className="bg-surface rounded-xl border border-b p-5 hover:shadow-sm transition-shadow"
             >
               <div className="flex items-start gap-4">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${cat.color}`}>
                   <cat.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-[#262626]">{cat.title}</h3>
-                  <p className="text-xs text-gray-500 mt-1">{cat.description}</p>
+                  <h3 className="text-sm font-semibold text-t-primary">{cat.title}</h3>
+                  <p className="text-xs text-t-secondary mt-1">{cat.description}</p>
                 </div>
               </div>
             </div>
@@ -109,7 +109,7 @@ export default function Home() {
 
       {/* How it works */}
       <div>
-        <h2 className="text-lg font-semibold text-[#262626] mb-4">How It Works</h2>
+        <h2 className="text-lg font-semibold text-t-primary mb-4">How It Works</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {[
             {
@@ -132,8 +132,8 @@ export default function Home() {
               <div className="w-10 h-10 bg-[#FF7F11] text-white rounded-full flex items-center justify-center mx-auto text-sm font-bold">
                 {item.step}
               </div>
-              <h3 className="text-sm font-semibold text-[#262626] mt-3">{item.title}</h3>
-              <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+              <h3 className="text-sm font-semibold text-t-primary mt-3">{item.title}</h3>
+              <p className="text-xs text-t-secondary mt-1">{item.description}</p>
             </div>
           ))}
         </div>

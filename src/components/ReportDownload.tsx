@@ -22,8 +22,8 @@ export default function ReportDownload({ reportId }: ReportDownloadProps) {
           <FileText className="w-6 h-6 text-[#FF7F11]" />
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-[#262626]">PDF Report Ready</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="text-sm font-semibold text-t-primary">PDF Report Ready</h3>
+          <p className="text-xs text-t-secondary mt-0.5">
             Download the full QA review report with screenshots and details.
           </p>
         </div>

@@ -128,20 +128,20 @@ export default function StepConfirmRun({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[#262626]">Review Summary</h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <h2 className="text-xl font-semibold text-t-primary">Review Summary</h2>
+        <p className="text-sm text-t-secondary mt-1">
           Confirm the review configuration and start.
         </p>
       </div>
 
-      <Card className="divide-y divide-gray-100">
+      <Card className="divide-y divide-b-light">
         <div className="flex items-center gap-4 p-4">
           <div className="w-10 h-10 rounded-lg bg-[#FF7F11]/10 flex items-center justify-center">
             <Globe className="w-5 h-5 text-[#FF7F11]" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-gray-500">Target Site</p>
-            <p className="text-sm font-medium text-[#262626]">{reviewState.targetUrl}</p>
+            <p className="text-xs text-t-secondary">Target Site</p>
+            <p className="text-sm font-medium text-t-primary">{reviewState.targetUrl}</p>
           </div>
         </div>
 
@@ -150,8 +150,8 @@ export default function StepConfirmRun({
             <Layers className="w-5 h-5 text-[#5a7a4e]" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-gray-500">Pages to Test</p>
-            <p className="text-sm font-medium text-[#262626]">{estimatedPages} pages</p>
+            <p className="text-xs text-t-secondary">Pages to Test</p>
+            <p className="text-sm font-medium text-t-primary">{estimatedPages} pages</p>
           </div>
         </div>
 
@@ -160,8 +160,8 @@ export default function StepConfirmRun({
             <FolderCheck className="w-5 h-5 text-blue-500" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-gray-500">Categories</p>
-            <p className="text-sm font-medium text-[#262626]">{categoryNames}</p>
+            <p className="text-xs text-t-secondary">Categories</p>
+            <p className="text-sm font-medium text-t-primary">{categoryNames}</p>
           </div>
         </div>
 
@@ -170,8 +170,8 @@ export default function StepConfirmRun({
             <Clock className="w-5 h-5 text-purple-500" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-gray-500">Estimated Duration</p>
-            <p className="text-sm font-medium text-[#262626]">~{estimatedMinutes} minutes</p>
+            <p className="text-xs text-t-secondary">Estimated Duration</p>
+            <p className="text-sm font-medium text-t-primary">~{estimatedMinutes} minutes</p>
           </div>
         </div>
       </Card>
@@ -180,20 +180,20 @@ export default function StepConfirmRun({
       {showRefUpload && (
         <Card className="p-4">
           <div className="flex items-center gap-3 mb-3">
-            <Upload className="w-4 h-4 text-gray-400" />
-            <p className="text-sm font-medium text-[#262626]">Reference Image (Optional)</p>
+            <Upload className="w-4 h-4 text-t-tertiary" />
+            <p className="text-sm font-medium text-t-primary">Reference Image (Optional)</p>
           </div>
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-t-secondary mb-3">
             Upload a reference image or design screenshot to compare colors against.
           </p>
           <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
+            className="border-2 border-dashed border-input-border rounded-lg p-4 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
             onClick={() => refImageInputRef.current?.click()}
           >
             {refImageName ? (
-              <p className="text-sm text-[#262626]">{refImageName}</p>
+              <p className="text-sm text-t-primary">{refImageName}</p>
             ) : (
-              <p className="text-sm text-gray-400">Click to upload reference image</p>
+              <p className="text-sm text-t-tertiary">Click to upload reference image</p>
             )}
             <input
               ref={refImageInputRef}
@@ -210,36 +210,36 @@ export default function StepConfirmRun({
       {showContentDoc && (
         <Card className="p-4">
           <div className="flex items-center gap-3 mb-3">
-            <FileCheck className="w-4 h-4 text-gray-400" />
-            <p className="text-sm font-medium text-[#262626]">Content Document</p>
+            <FileCheck className="w-4 h-4 text-t-tertiary" />
+            <p className="text-sm font-medium text-t-primary">Content Document</p>
           </div>
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-t-secondary mb-3">
             Upload a document file. Its content will be checked against each page to verify
             that key text, paragraphs, and sentences appear on the website.
           </p>
           <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
+            className="border-2 border-dashed border-input-border rounded-lg p-4 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
             onClick={() => docInputRef.current?.click()}
           >
             {reviewState.contentDocumentName ? (
               <div className="flex items-center justify-center gap-2">
                 <FileCheck className="w-4 h-4 text-[#5a7a4e]" />
-                <p className="text-sm text-[#262626] font-medium">{reviewState.contentDocumentName}</p>
+                <p className="text-sm text-t-primary font-medium">{reviewState.contentDocumentName}</p>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onContentDocumentChange(null, null);
                   }}
-                  className="ml-2 text-gray-400 hover:text-[#E53E3E] transition-colors"
+                  className="ml-2 text-t-tertiary hover:text-[#E53E3E] transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <>
-                <Upload className="w-6 h-6 mx-auto text-gray-400 mb-1" />
-                <p className="text-sm text-gray-400">Click to upload a document</p>
-                <p className="text-xs text-gray-300 mt-1">.pdf, .docx, .odt, .txt, .md supported</p>
+                <Upload className="w-6 h-6 mx-auto text-t-tertiary mb-1" />
+                <p className="text-sm text-t-tertiary">Click to upload a document</p>
+                <p className="text-xs text-t-muted mt-1">.pdf, .docx, .odt, .txt, .md supported</p>
               </>
             )}
             <input
@@ -257,10 +257,10 @@ export default function StepConfirmRun({
       {showTextFinder && (
         <Card className="p-4">
           <div className="flex items-center gap-3 mb-3">
-            <Search className="w-4 h-4 text-gray-400" />
-            <p className="text-sm font-medium text-[#262626]">Search Terms</p>
+            <Search className="w-4 h-4 text-t-tertiary" />
+            <p className="text-sm font-medium text-t-primary">Search Terms</p>
           </div>
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-t-secondary mb-3">
             Add words, sentences, or paragraphs to search for across all pages.
             Press Enter to add each term. Paste multi-line text to add multiple at once.
           </p>
@@ -274,7 +274,7 @@ export default function StepConfirmRun({
               onPaste={handlePaste}
               placeholder="Type a word, sentence, or paragraph..."
               rows={2}
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-[#262626] placeholder:text-gray-400 outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 resize-none transition-all"
+              className="flex-1 rounded-lg border border-input-border px-3 py-2 text-sm text-t-primary placeholder:text-t-tertiary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 resize-none transition-all"
             />
             <Button onClick={addTerm} size="sm" className="self-end">
               <Plus className="w-4 h-4" />
@@ -288,23 +288,23 @@ export default function StepConfirmRun({
               {reviewState.searchTerms.map((term, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2 bg-gray-50 rounded-lg px-3 py-2 group"
+                  className="flex items-start gap-2 bg-surface-secondary rounded-lg px-3 py-2 group"
                 >
-                  <span className="text-xs text-gray-400 font-mono mt-0.5 flex-shrink-0">
+                  <span className="text-xs text-t-tertiary font-mono mt-0.5 flex-shrink-0">
                     {idx + 1}.
                   </span>
-                  <p className="text-sm text-[#262626] flex-1 break-words">
+                  <p className="text-sm text-t-primary flex-1 break-words">
                     {term.length > 120 ? term.substring(0, 120) + '...' : term}
                   </p>
                   <button
                     onClick={() => removeTerm(term)}
-                    className="text-gray-300 hover:text-[#E53E3E] transition-colors flex-shrink-0 mt-0.5"
+                    className="text-t-muted hover:text-[#E53E3E] transition-colors flex-shrink-0 mt-0.5"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
-              <p className="text-xs text-gray-400 pt-1">
+              <p className="text-xs text-t-tertiary pt-1">
                 {reviewState.searchTerms.length} search term{reviewState.searchTerms.length !== 1 ? 's' : ''} added
               </p>
             </div>
@@ -323,16 +323,16 @@ export default function StepConfirmRun({
           <Card className="p-4">
             <div className="flex items-center gap-3 mb-3">
               <Sparkles className="w-4 h-4 text-[#FF7F11]" />
-              <p className="text-sm font-medium text-[#262626]">AI Review</p>
+              <p className="text-sm font-medium text-t-primary">AI Review</p>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-t-secondary mb-3">
               {providerInfo.name} will analyze all test results to provide expert QA insights, prioritization, and recommendations.
             </p>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span>Provider: <strong className="text-[#262626]">{providerInfo.name}</strong></span>
-              <span>Vision Mode: <strong className="text-[#262626]">{reviewState.config.aiReviewVision ? 'Enabled' : 'Disabled'}</strong></span>
+            <div className="flex items-center gap-4 text-xs text-t-secondary">
+              <span>Provider: <strong className="text-t-primary">{providerInfo.name}</strong></span>
+              <span>Vision Mode: <strong className="text-t-primary">{reviewState.config.aiReviewVision ? 'Enabled' : 'Disabled'}</strong></span>
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-t-tertiary mt-2">
               {reviewState.config.aiProvider === 'ollama'
                 ? 'Ollama must be running locally (default model: llama3.2)'
                 : `Requires ${providerInfo.envVar} environment variable`}

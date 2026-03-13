@@ -66,8 +66,8 @@ export default function StepPageSelect({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-[#262626]">Select Pages</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-xl font-semibold text-t-primary">Select Pages</h2>
+          <p className="text-sm text-t-secondary mt-1">
             {selectedPages.length} of {pages.length} pages selected
           </p>
         </div>
@@ -83,13 +83,13 @@ export default function StepPageSelect({
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-t-tertiary" />
         <input
           type="text"
           placeholder="Search pages..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all"
+          className="w-full pl-10 pr-4 py-2.5 text-sm border border-input-border rounded-lg outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all"
         />
       </div>
 
@@ -100,7 +100,7 @@ export default function StepPageSelect({
             <div className="flex items-center justify-between mb-2">
               <button
                 onClick={() => toggleGroup(groupPages)}
-                className="text-xs font-semibold text-gray-500 uppercase tracking-wide hover:text-[#FF7F11] transition-colors"
+                className="text-xs font-semibold text-t-secondary uppercase tracking-wide hover:text-[#FF7F11] transition-colors"
               >
                 {group} ({groupPages.length})
               </button>
@@ -120,11 +120,11 @@ export default function StepPageSelect({
                       onChange={() => togglePage(page.path)}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#262626] truncate">
+                      <p className="text-sm font-medium text-t-primary truncate">
                         {page.path || '/'}
                       </p>
                       {page.title && (
-                        <p className="text-xs text-gray-400 truncate">{page.title}</p>
+                        <p className="text-xs text-t-tertiary truncate">{page.title}</p>
                       )}
                     </div>
                   </div>
