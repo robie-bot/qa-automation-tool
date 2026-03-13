@@ -38,26 +38,26 @@ function AuditItem({ audit }: { audit: PageSpeedAudit }) {
   }
 
   return (
-    <div className="border-b border-gray-100 last:border-0">
+    <div className="border-b border-b-light last:border-0">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 py-2.5 px-3 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center gap-3 py-2.5 px-3 text-left hover:bg-surface-secondary transition-colors"
       >
         <div
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: color }}
         />
-        <span className="text-sm text-[#262626] flex-1">{audit.title}</span>
+        <span className="text-sm text-t-primary flex-1">{audit.title}</span>
         {audit.displayValue && (
-          <span className="text-xs text-gray-500 mr-2">{audit.displayValue}</span>
+          <span className="text-xs text-t-secondary mr-2">{audit.displayValue}</span>
         )}
         {expanded
-          ? <ChevronDown className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-          : <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
+          ? <ChevronDown className="w-3.5 h-3.5 text-t-tertiary flex-shrink-0" />
+          : <ChevronRight className="w-3.5 h-3.5 text-t-tertiary flex-shrink-0" />}
       </button>
       {expanded && audit.description && (
         <div className="px-3 pb-3 pl-8">
-          <p className="text-xs text-gray-500 leading-relaxed">
+          <p className="text-xs text-t-secondary leading-relaxed">
             {stripMarkdownLinks(audit.description)}
           </p>
         </div>
@@ -85,16 +85,16 @@ function AuditGroup({
     <Card className="p-0 overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center gap-3 p-4 text-left hover:bg-surface-secondary transition-colors"
       >
         {open
-          ? <ChevronDown className="w-4 h-4 text-gray-400" />
-          : <ChevronRight className="w-4 h-4 text-gray-400" />}
-        <span className="text-sm font-semibold text-[#262626] flex-1">{title}</span>
+          ? <ChevronDown className="w-4 h-4 text-t-tertiary" />
+          : <ChevronRight className="w-4 h-4 text-t-tertiary" />}
+        <span className="text-sm font-semibold text-t-primary flex-1">{title}</span>
         <Badge variant="default">{count ?? audits.length}</Badge>
       </button>
       {open && (
-        <div className="border-t border-gray-100">
+        <div className="border-t border-b-light">
           {audits.map((audit) => (
             <AuditItem key={audit.id} audit={audit} />
           ))}
@@ -179,11 +179,11 @@ function StrategyView({ result }: { result: PageSpeedStrategyResult }) {
       {/* Core Web Vitals */}
       {result.metrics.length > 0 && (
         <Card className="p-5">
-          <h3 className="text-sm font-semibold text-[#262626] mb-4">Core Web Vitals & Metrics</h3>
+          <h3 className="text-sm font-semibold text-t-primary mb-4">Core Web Vitals & Metrics</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {result.metrics.map((metric) => (
               <div key={metric.id} className="flex flex-col gap-1">
-                <span className="text-xs text-gray-500">{metric.title}</span>
+                <span className="text-xs text-t-secondary">{metric.title}</span>
                 <div className="flex items-center gap-2">
                   <span
                     className="text-lg font-semibold"
@@ -241,7 +241,7 @@ export default function PageSpeedResults({ results }: PageSpeedResultsProps) {
           <select
             value={selectedPage}
             onChange={(e) => setSelectedPage(Number(e.target.value))}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 outline-none focus:border-[#FF7F11]"
+            className="text-sm border border-input-border rounded-lg px-3 py-1.5 outline-none focus:border-[#FF7F11]"
           >
             {results.map((r, i) => (
               <option key={i} value={i}>
@@ -252,13 +252,13 @@ export default function PageSpeedResults({ results }: PageSpeedResultsProps) {
         )}
 
         {/* Strategy toggle */}
-        <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+        <div className="flex items-center bg-surface-secondary rounded-lg p-0.5">
           <button
             onClick={() => setStrategy('mobile')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               strategy === 'mobile'
-                ? 'bg-white text-[#262626] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-surface text-t-primary shadow-sm'
+                : 'text-t-secondary hover:text-gray-700'
             }`}
           >
             <Smartphone className="w-4 h-4" />
@@ -268,8 +268,8 @@ export default function PageSpeedResults({ results }: PageSpeedResultsProps) {
             onClick={() => setStrategy('desktop')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               strategy === 'desktop'
-                ? 'bg-white text-[#262626] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-surface text-t-primary shadow-sm'
+                : 'text-t-secondary hover:text-gray-700'
             }`}
           >
             <Monitor className="w-4 h-4" />
@@ -282,7 +282,7 @@ export default function PageSpeedResults({ results }: PageSpeedResultsProps) {
           href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(currentData.pageUrl)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-auto flex items-center gap-1 text-xs text-gray-400 hover:text-[#FF7F11] transition-colors"
+          className="ml-auto flex items-center gap-1 text-xs text-t-tertiary hover:text-[#FF7F11] transition-colors"
         >
           View on PageSpeed Insights
           <ExternalLink className="w-3 h-3" />
@@ -294,7 +294,7 @@ export default function PageSpeedResults({ results }: PageSpeedResultsProps) {
         <StrategyView result={currentResult} />
       ) : (
         <Card className="p-8 text-center">
-          <p className="text-gray-400 text-sm">
+          <p className="text-t-tertiary text-sm">
             No {strategy} data available for this page.
           </p>
         </Card>

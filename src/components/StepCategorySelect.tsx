@@ -70,8 +70,8 @@ export default function StepCategorySelect({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-[#262626]">Select Test Categories</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-xl font-semibold text-t-primary">Select Test Categories</h2>
+          <p className="text-sm text-t-secondary mt-1">
             Choose which test categories to run.
           </p>
         </div>
@@ -102,15 +102,15 @@ export default function StepCategorySelect({
                   onChange={() => toggleCategory(category.id)}
                 />
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  isSelected ? 'bg-[#FF7F11]/10 text-[#FF7F11]' : 'bg-gray-100 text-gray-400'
+                  isSelected ? 'bg-[#FF7F11]/10 text-[#FF7F11]' : 'bg-surface-secondary text-t-tertiary'
                 }`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-[#262626]">{category.name}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">{category.description}</p>
+                  <h3 className="text-sm font-semibold text-t-primary">{category.name}</h3>
+                  <p className="text-xs text-t-secondary mt-0.5">{category.description}</p>
                 </div>
-                <span className="text-xs text-gray-400 whitespace-nowrap">{category.estimatedTime}</span>
+                <span className="text-xs text-t-tertiary whitespace-nowrap">{category.estimatedTime}</span>
               </div>
             </Card>
           );
@@ -119,11 +119,11 @@ export default function StepCategorySelect({
         {selectedCategories.includes('ai-review') && (
           <Card className="p-4 ml-14 border-dashed">
             <div className="mb-3">
-              <label className="block text-sm font-medium text-[#262626] mb-1">AI Provider</label>
+              <label className="block text-sm font-medium text-t-primary mb-1">AI Provider</label>
               <select
                 value={aiProvider}
                 onChange={(e) => onAIProviderChange(e.target.value as AIProvider)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-[#262626] outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all bg-white"
+                className="w-full rounded-lg border border-input-border px-3 py-2 text-sm text-t-primary outline-none focus:border-[#FF7F11] focus:ring-2 focus:ring-[#FF7F11]/20 transition-all bg-surface"
               >
                 {AI_PROVIDER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -136,7 +136,7 @@ export default function StepCategorySelect({
               label="Vision Mode"
               description="Send screenshots to AI for visual analysis (uses more tokens)"
             />
-            <p className="text-xs text-gray-400 mt-2 ml-8">
+            <p className="text-xs text-t-tertiary mt-2 ml-8">
               {aiProvider === 'ollama'
                 ? 'Ollama must be running locally. Set OLLAMA_MODEL to choose a model (default: llama3.2)'
                 : `Requires ${AI_PROVIDER_ENV_VARS[aiProvider]} environment variable`}

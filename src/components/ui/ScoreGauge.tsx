@@ -74,7 +74,7 @@ export default function ScoreGauge({ score, label, size = 96 }: ScoreGaugeProps)
           </span>
         </div>
       </div>
-      <span className="text-xs font-medium text-gray-600 text-center leading-tight">
+      <span className="text-xs font-medium text-t-secondary text-center leading-tight">
         {label}
       </span>
     </div>

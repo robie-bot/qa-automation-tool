@@ -1,7 +1,7 @@
 import { Browser, BrowserContext } from 'playwright-core';
 import { TestCategory, TestIssue, ReviewConfig, SSEEvent, PageSpeedData } from '@/types';
 import { runLayoutTests } from './tests/layout';
-import { runTypographyTests } from './tests/typography';
+import { runTypographyTests, compareTypographyAcrossPages, TypographyFingerprint } from './tests/typography';
 import { runColorSchemeTests } from './tests/color-scheme';
 import { runBrokenLinksTests } from './tests/broken-links';
 import { runPageSpeedTests } from './tests/pagespeed';
@@ -37,6 +37,7 @@ export async function runReview(
 
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
+  const typographyFingerprints: TypographyFingerprint[] = [];
 
   try {
     if (needsBrowser) {
@@ -100,9 +101,12 @@ export async function runReview(
             case 'layout':
               issues = await runLayoutTests(page, pagePath, config);
               break;
-            case 'typography':
-              issues = await runTypographyTests(page, pagePath, config);
+            case 'typography': {
+              const typoResult = await runTypographyTests(page, pagePath, config);
+              issues = typoResult.issues;
+              typographyFingerprints.push(typoResult.fingerprint);
               break;
+            }
             case 'color-scheme':
               issues = await runColorSchemeTests(page, pagePath, config, referenceImage);
               break;
@@ -208,6 +212,30 @@ export async function runReview(
         } finally {
           completedSteps++;
         }
+      }
+    }
+
+    // ── Cross-page typography consistency ──────────────────────────────
+    if (typographyFingerprints.length >= 2) {
+      onEvent({
+        type: 'progress',
+        page: '(cross-page)',
+        category: 'typography',
+        percent: 95,
+        message: 'Comparing typography consistency across pages...',
+      });
+
+      const crossPageIssues = compareTypographyAcrossPages(typographyFingerprints);
+      allIssues.push(...crossPageIssues);
+
+      for (const issue of crossPageIssues) {
+        onEvent({
+          type: 'issue',
+          severity: issue.severity,
+          page: '(cross-page)',
+          category: 'typography',
+          message: issue.message,
+        });
       }
     }
 

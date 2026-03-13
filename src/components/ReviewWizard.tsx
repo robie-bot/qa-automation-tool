@@ -307,8 +307,8 @@ export default function ReviewWizard() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-[#262626]">Review Complete</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-xl font-semibold text-t-primary">Review Complete</h2>
+            <p className="text-sm text-t-secondary mt-1">
               Reviewed {summary.pagesReviewed} pages in {Math.round(summary.duration / 1000)}s
             </p>
           </div>
@@ -338,7 +338,7 @@ export default function ReviewWizard() {
           const isDone = idx < currentStepIndex;
           return (
             <div key={label} className="flex items-center gap-2">
-              {idx > 0 && <div className={`w-8 h-0.5 ${isDone ? 'bg-[#FF7F11]' : 'bg-gray-200'}`} />}
+              {idx > 0 && <div className={`w-8 h-0.5 ${isDone ? 'bg-[#FF7F11]' : 'bg-b'}`} />}
               <div className="flex items-center gap-2">
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
@@ -346,12 +346,12 @@ export default function ReviewWizard() {
                       ? 'bg-[#FF7F11] text-white'
                       : isActive
                       ? 'bg-[#FF7F11]/10 text-[#FF7F11] border-2 border-[#FF7F11]'
-                      : 'bg-gray-100 text-gray-400'
+                      : 'bg-surface-secondary text-t-tertiary'
                   }`}
                 >
                   {isDone ? <Check className="w-3.5 h-3.5" /> : idx + 1}
                 </div>
-                <span className={`text-xs font-medium hidden sm:block ${isActive ? 'text-[#262626]' : 'text-gray-400'}`}>
+                <span className={`text-xs font-medium hidden sm:block ${isActive ? 'text-t-primary' : 'text-t-tertiary'}`}>
                   {label}
                 </span>
               </div>
@@ -401,7 +401,7 @@ export default function ReviewWizard() {
 
       {/* Navigation */}
       {step > 0 && (
-        <div className="flex justify-between pt-4 border-t border-gray-100">
+        <div className="flex justify-between pt-4 border-t border-b-light">
           <Button variant="ghost" onClick={goBack}>
             <ArrowLeft className="w-4 h-4" />
             Back

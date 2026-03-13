@@ -27,7 +27,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
               'w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200',
               checked
                 ? 'bg-[#FF7F11] border-[#FF7F11]'
-                : 'border-gray-300 group-hover:border-[#FF7F11]/50'
+                : 'border-input-border group-hover:border-[#FF7F11]/50'
             )}
           >
             {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
@@ -35,8 +35,8 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         </div>
         {(label || description) && (
           <div className="flex-1">
-            {label && <span className="text-sm font-medium text-[#262626]">{label}</span>}
-            {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
+            {label && <span className="text-sm font-medium text-t-primary">{label}</span>}
+            {description && <p className="text-xs text-t-secondary mt-0.5">{description}</p>}
           </div>
         )}
       </label>

@@ -22,9 +22,19 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
   const [fileName, setFileName] = useState('');
   const [sitemapContent, setSitemapContent] = useState('');
 
+  const MAX_SITEMAP_SIZE = 5 * 1024 * 1024; // 5MB
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_SITEMAP_SIZE) {
+      setError(`Sitemap too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 5MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    setError('');
     setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -121,8 +131,8 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[#262626]">Enter Target Website</h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <h2 className="text-xl font-semibold text-t-primary">Enter Target Website</h2>
+        <p className="text-sm text-t-secondary mt-1">
           Provide a website URL, sitemap URL, or upload a sitemap file to discover pages.
         </p>
       </div>
@@ -137,9 +147,9 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
             onClick={() => setInputMode(mode.id)}
             className="p-4 text-center"
           >
-            <mode.icon className={`w-5 h-5 mx-auto mb-2 ${inputMode === mode.id ? 'text-[#FF7F11]' : 'text-gray-400'}`} />
-            <p className="text-sm font-medium text-[#262626]">{mode.label}</p>
-            <p className="text-xs text-gray-400 mt-1">{mode.desc}</p>
+            <mode.icon className={`w-5 h-5 mx-auto mb-2 ${inputMode === mode.id ? 'text-[#FF7F11]' : 'text-t-tertiary'}`} />
+            <p className="text-sm font-medium text-t-primary">{mode.label}</p>
+            <p className="text-xs text-t-tertiary mt-1">{mode.desc}</p>
           </Card>
         ))}
       </div>
@@ -175,18 +185,18 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
               onChange={(e) => setUrl(e.target.value)}
             />
             <div>
-              <label className="block text-sm font-medium text-[#262626] mb-1.5">
+              <label className="block text-sm font-medium text-t-primary mb-1.5">
                 Sitemap File
               </label>
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
+                className="border-2 border-dashed border-input-border rounded-lg p-6 text-center cursor-pointer hover:border-[#FF7F11]/50 transition-colors"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                <Upload className="w-8 h-8 mx-auto text-t-tertiary mb-2" />
                 {fileName ? (
-                  <p className="text-sm text-[#262626] font-medium">{fileName}</p>
+                  <p className="text-sm text-t-primary font-medium">{fileName}</p>
                 ) : (
-                  <p className="text-sm text-gray-500">Click to upload sitemap.xml</p>
+                  <p className="text-sm text-t-secondary">Click to upload sitemap.xml</p>
                 )}
                 <input
                   ref={fileInputRef}
@@ -225,7 +235,7 @@ export default function StepUrlInput({ onPagesDiscovered }: StepUrlInputProps) {
       {loading && (
         <div className="flex items-center gap-3 p-4 bg-[#E2E8CE]/30 rounded-lg">
           <Loader2 className="w-5 h-5 animate-spin text-[#FF7F11]" />
-          <span className="text-sm text-[#262626]">
+          <span className="text-sm text-t-primary">
             Crawling website and discovering pages. This may take a moment...
           </span>
         </div>

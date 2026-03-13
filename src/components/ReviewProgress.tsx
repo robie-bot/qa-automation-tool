@@ -43,32 +43,32 @@ export default function ReviewProgress({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[#262626]">Review in Progress</h2>
-        <p className="text-sm text-gray-500 mt-1">{currentMessage}</p>
+        <h2 className="text-xl font-semibold text-t-primary">Review in Progress</h2>
+        <p className="text-sm text-t-secondary mt-1">{currentMessage}</p>
       </div>
 
       {/* Overall progress */}
       <Card className="p-5">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-[#262626]">Overall Progress</span>
-          <span className="text-sm text-gray-500">{percent}%</span>
+          <span className="text-sm font-medium text-t-primary">Overall Progress</span>
+          <span className="text-sm text-t-secondary">{percent}%</span>
         </div>
         <Progress value={percent} size="lg" />
       </Card>
 
       {/* Category statuses */}
       <Card className="p-5">
-        <h3 className="text-sm font-semibold text-[#262626] mb-4">Test Categories</h3>
+        <h3 className="text-sm font-semibold text-t-primary mb-4">Test Categories</h3>
         <div className="space-y-3">
           {CATEGORY_INFO.map((cat) => {
             const status = categoryStatuses[cat.id] || 'pending';
             return (
               <div key={cat.id} className="flex items-center gap-3">
                 {statusIcon(status)}
-                <span className={`text-sm flex-1 ${status === 'running' ? 'text-[#262626] font-medium' : 'text-gray-500'}`}>
+                <span className={`text-sm flex-1 ${status === 'running' ? 'text-t-primary font-medium' : 'text-t-secondary'}`}>
                   {cat.name}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-t-tertiary">
                   {status === 'done' ? 'Complete' : status === 'running' ? 'Running...' : 'Pending'}
                 </span>
               </div>
@@ -84,28 +84,28 @@ export default function ReviewProgress({
             <XCircle className="w-4 h-4 text-[#E53E3E]" />
             <span className="text-2xl font-bold text-[#E53E3E]">{issueCount.errors}</span>
           </div>
-          <p className="text-xs text-gray-500">Errors</p>
+          <p className="text-xs text-t-secondary">Errors</p>
         </Card>
         <Card className="flex-1 p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-[#FF7F11]" />
             <span className="text-2xl font-bold text-[#FF7F11]">{issueCount.warnings}</span>
           </div>
-          <p className="text-xs text-gray-500">Warnings</p>
+          <p className="text-xs text-t-secondary">Warnings</p>
         </Card>
       </div>
 
       {/* Recent issues */}
       {recentIssues.length > 0 && (
         <Card className="p-5">
-          <h3 className="text-sm font-semibold text-[#262626] mb-3">Recent Issues</h3>
+          <h3 className="text-sm font-semibold text-t-primary mb-3">Recent Issues</h3>
           <div className="space-y-2">
             {recentIssues.map((issue, idx) => (
               <div key={idx} className="flex items-start gap-2 text-sm">
                 <Badge variant={issue.severity === 'error' ? 'error' : 'warning'}>
                   {issue.severity}
                 </Badge>
-                <span className="text-gray-600 text-xs flex-1">{issue.message}</span>
+                <span className="text-t-secondary text-xs flex-1">{issue.message}</span>
               </div>
             ))}
           </div>

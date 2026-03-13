@@ -156,6 +156,90 @@ export async function runBrokenLinksTests(
       await Promise.all(batch.map(checkUrl));
     }
 
+    // Detect non-functional buttons and links (dead clicks)
+    const deadElements = await page.evaluate(() => {
+      const results: Array<{
+        tag: string;
+        text: string;
+        selector: string;
+        reason: string;
+        href?: string;
+      }> = [];
+
+      // Check anchor links that go nowhere
+      document.querySelectorAll('a').forEach((el, idx) => {
+        const href = el.getAttribute('href');
+        const text = (el.textContent || '').trim().substring(0, 60);
+        const sel = `a:nth-of-type(${idx + 1})`;
+
+        if (!href || href === '') {
+          results.push({ tag: 'a', text, selector: sel, reason: 'Missing href attribute', href: '' });
+        } else if (href === '#') {
+          // Only flag if it doesn't have a click event listener via onclick attribute
+          if (!el.getAttribute('onclick') && !el.closest('[data-toggle]') && !el.closest('[data-bs-toggle]')) {
+            results.push({ tag: 'a', text, selector: sel, reason: 'href="#" with no apparent handler', href });
+          }
+        } else if (href === 'javascript:void(0)' || href === 'javascript:void(0);' || href === 'javascript:;' || href === 'javascript:undefined') {
+          if (!el.getAttribute('onclick')) {
+            results.push({ tag: 'a', text, selector: sel, reason: `href="${href}" with no onclick handler`, href });
+          }
+        }
+      });
+
+      // Check buttons that aren't wired up
+      document.querySelectorAll('button').forEach((el, idx) => {
+        const text = (el.textContent || '').trim().substring(0, 60);
+        const sel = `button:nth-of-type(${idx + 1})`;
+        const type = el.getAttribute('type') || 'submit';
+        const hasOnclick = el.getAttribute('onclick');
+        const isInForm = !!el.closest('form');
+        const hasAriaExpanded = el.hasAttribute('aria-expanded');
+        const hasDataToggle = el.hasAttribute('data-toggle') || el.hasAttribute('data-bs-toggle');
+        const isDisabled = el.disabled;
+
+        // Skip disabled buttons, buttons in forms (submit/reset), and toggle buttons
+        if (isDisabled || isInForm || hasAriaExpanded || hasDataToggle || hasOnclick) return;
+
+        // Check if button has no type="submit" context and no inline handler
+        if (type !== 'submit' && type !== 'reset') {
+          // Try to detect if the button has JS event listeners by checking common patterns
+          const hasReactHandler = Object.keys(el).some(k => k.startsWith('__reactFiber') || k.startsWith('__reactEvents'));
+          const hasVueHandler = !!(el as any).__vue__ || !!(el as any).__vue_app__;
+          const hasAngularHandler = el.hasAttribute('ng-click') || el.hasAttribute('(click)');
+
+          // Only flag if no framework handler detected
+          if (!hasReactHandler && !hasVueHandler && !hasAngularHandler) {
+            results.push({ tag: 'button', text, selector: sel, reason: 'Button with no apparent click handler or form association' });
+          }
+        }
+      });
+
+      // Check elements with role="button" that might not work
+      document.querySelectorAll('[role="button"]').forEach((el, idx) => {
+        if (el.tagName === 'BUTTON' || el.tagName === 'A') return; // Already checked above
+        const text = (el.textContent || '').trim().substring(0, 60);
+        const sel = `[role="button"]:nth-of-type(${idx + 1})`;
+        const hasOnclick = el.getAttribute('onclick');
+        const hasTabindex = el.hasAttribute('tabindex');
+
+        if (!hasOnclick && !hasTabindex) {
+          results.push({ tag: el.tagName.toLowerCase(), text, selector: sel, reason: 'Element with role="button" but no click handler or tabindex' });
+        }
+      });
+
+      return results.slice(0, 30);
+    });
+
+    for (const dead of deadElements) {
+      issues.push({
+        severity: 'warning',
+        message: `Non-functional ${dead.tag}: "${dead.text || '(no text)'}" — ${dead.reason}`,
+        selector: dead.selector,
+        category: 'broken-links',
+        pageUrl,
+      });
+    }
+
     // Summary
     const brokenCount = issues.filter((i) => i.severity === 'error').length;
     const warningCount = issues.filter((i) => i.severity === 'warning').length;

@@ -1,5 +1,6 @@
 import { Page } from 'playwright-core';
 import { TestIssue, ReviewConfig } from '@/types';
+import { safePageScreenshot } from './screenshot-utils';
 
 interface RGB {
   r: number;

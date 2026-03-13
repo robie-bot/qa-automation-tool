@@ -1,5 +1,6 @@
 import { Page } from 'playwright-core';
 import { TestIssue, ReviewConfig } from '@/types';
+import { safePageScreenshot } from './screenshot-utils';
 
 export async function runLayoutTests(
   page: Page,
@@ -20,14 +21,14 @@ export async function runLayoutTests(
       });
 
       if (hasOverflow) {
-        const screenshot = await page.screenshot({ fullPage: false, type: 'jpeg', quality: 60 });
+        const screenshot = await safePageScreenshot(page, { fullPage: false, quality: 60 });
         issues.push({
           severity: 'error',
           message: `Horizontal scroll overflow detected at ${width}px viewport`,
           category: 'layout',
           pageUrl,
           viewport: `${width}px`,
-          screenshot: screenshot.toString('base64'),
+          screenshot,
         });
       }
 
@@ -175,14 +176,14 @@ export async function runLayoutTests(
 
       // Take viewport screenshot
       if (width === viewports[0] || width === viewports[viewports.length - 1]) {
-        const screenshot = await page.screenshot({ fullPage: true, type: 'jpeg', quality: 50 });
+        const screenshot = await safePageScreenshot(page, { fullPage: true, quality: 50 });
         issues.push({
           severity: 'info',
           message: `Layout screenshot at ${width}px viewport`,
           category: 'layout',
           pageUrl,
           viewport: `${width}px`,
-          screenshot: screenshot.toString('base64'),
+          screenshot,
         });
       }
     } catch (error) {
