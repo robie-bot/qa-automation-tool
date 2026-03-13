@@ -1,4 +1,5 @@
 import { ArrowRight, Layout, Type, Palette, Link, ClipboardCheck, Gauge, FileCheck, Search, Image } from 'lucide-react';
+import ReviewHistory from '@/components/ReviewHistory';
 
 export default function Home() {
   return (
@@ -30,6 +31,9 @@ export default function Home() {
         </div>
         <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-[#FF7F11] group-hover:translate-x-1 transition-all" />
       </a>
+
+      {/* Review history */}
+      <ReviewHistory />
 
       {/* Test categories overview */}
       <div>

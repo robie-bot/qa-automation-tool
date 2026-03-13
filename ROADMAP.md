@@ -19,15 +19,15 @@ A working QA automation tool with 9 test categories, 4 AI providers, PDF report 
 
 **Goal:** Fix critical vulnerabilities before any public deployment.
 
-- [ ] **SSRF protection** — Block private IP ranges (127.0.0.1, 169.254.x.x, 10.0.0.0/8, 192.168.0.0/16)
-- [ ] **File upload limits** — 10MB images, 20MB documents, 5MB sitemaps
-- [ ] **Screenshot size caps** — Max 5000px height, 500KB per screenshot
-- [ ] **Rate limiting** — 10 reviews/hour per IP using in-memory or Redis store
-- [ ] **Security headers** — CSP, X-Frame-Options, HSTS, X-Content-Type-Options
-- [ ] **XML entity protection** — Prevent XXE in sitemap parsing
-- [ ] **Input sanitization** — Validate search terms, URLs, and file formats
-- [ ] **Error message sanitization** — Generic errors in production
-- [ ] **Report cleanup** — Auto-delete reports older than 30 days
+- [x] **SSRF protection** — Block private IP ranges (127.0.0.1, 169.254.x.x, 10.0.0.0/8, 192.168.0.0/16)
+- [x] **File upload limits** — 10MB images, 20MB documents, 5MB sitemaps
+- [x] **Screenshot size caps** — Max 5000px height, 500KB per screenshot
+- [x] **Rate limiting** — 10 reviews/hour per IP using in-memory or Redis store
+- [x] **Security headers** — CSP, X-Frame-Options, HSTS, X-Content-Type-Options
+- [x] **XML entity protection** — Prevent XXE in sitemap parsing
+- [x] **Input sanitization** — Validate search terms, URLs, and file formats
+- [x] **Error message sanitization** — Generic errors in production
+- [x] **Report cleanup** — Auto-delete reports older than 30 days
 
 ---
 
@@ -35,12 +35,12 @@ A working QA automation tool with 9 test categories, 4 AI providers, PDF report 
 
 **Goal:** Support multiple users with their own reviews and API keys.
 
-- [ ] **User authentication** — Login/register (email + password or OAuth)
-- [ ] **Session management** — JWT or cookie-based sessions
-- [ ] **Per-user API keys** — Users bring their own AI provider keys (stored encrypted)
-- [ ] **Report ownership** — Reports tied to user accounts
-- [ ] **Review history** — Dashboard showing past reviews with status
-- [ ] **User settings** — Default config, preferred AI provider, notification preferences
+- [x] **User authentication** — Login/register (email + password)
+- [x] **Session management** — JWT with httpOnly cookies (jose for Edge middleware)
+- [x] **Per-user API keys** — Users bring their own AI provider keys (AES-256-GCM encrypted)
+- [x] **Report ownership** — Reports tied to user accounts with ownership verification
+- [x] **Review history** — Dashboard showing past reviews with status, pagination, download
+- [x] **User settings** — Default AI provider, viewports, vision mode preferences
 
 ---
 

@@ -119,6 +119,14 @@ export async function POST(request: NextRequest) {
                 id: reportId,
                 userId,
                 targetUrl,
+                pagesReviewed: summary.pagesReviewed,
+                totalIssues: summary.totalIssues,
+                errors: summary.errors,
+                warnings: summary.warnings,
+                infos: summary.infos,
+                duration: summary.duration,
+                categories: categories.join(','),
+                status: 'completed',
               },
             });
           } catch (err) {

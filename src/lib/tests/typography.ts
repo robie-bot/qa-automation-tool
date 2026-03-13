@@ -1,5 +1,6 @@
 import { Page } from 'playwright-core';
 import { TestIssue, ReviewConfig } from '@/types';
+import { safeElementScreenshot } from './screenshot-utils';
 
 // ─── Color / Contrast Utilities ─────────────────────────────────────────────
 
@@ -253,17 +254,9 @@ export async function runTypographyTests(
   // Helper to capture an element screenshot by CSS selector
   async function captureElementScreenshot(selector: string): Promise<string | undefined> {
     if (screenshotCount >= MAX_SCREENSHOTS) return undefined;
-    try {
-      const el = page.locator(selector).first();
-      if (await el.isVisible()) {
-        const shot = await el.screenshot({ type: 'jpeg', quality: 60 });
-        screenshotCount++;
-        return shot.toString('base64');
-      }
-    } catch {
-      // Element may not be screenshotable
-    }
-    return undefined;
+    const result = await safeElementScreenshot(page.locator(selector).first(), { quality: 60 });
+    if (result) screenshotCount++;
+    return result;
   }
 
   try {

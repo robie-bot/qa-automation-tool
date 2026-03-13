@@ -1,6 +1,7 @@
 import { Page } from 'playwright-core';
 import { TestIssue, ReviewConfig, TestCategory, CATEGORY_INFO } from '@/types';
 import { getProvider, AIUserContent } from './ai-providers';
+import { safePageScreenshot } from './screenshot-utils';
 
 interface AIFinding {
   severity: 'error' | 'warning' | 'info';
@@ -68,8 +69,8 @@ async function captureScreenshots(
 
   if (!visionMode) {
     // Even without vision mode, capture one full-page screenshot for reference
-    const shot = await page.screenshot({ fullPage: true, type: 'jpeg', quality: 50 });
-    screenshots.push({ base64: shot.toString('base64'), label: 'Full page' });
+    const shotBase64 = await safePageScreenshot(page, { fullPage: true, quality: 50 });
+    screenshots.push({ base64: shotBase64 || '', label: 'Full page' });
     return screenshots;
   }
 
@@ -80,8 +81,8 @@ async function captureScreenshots(
     await page.setViewportSize({ width: vp.width, height: 900 });
     await page.waitForTimeout(500); // let layout settle
 
-    const shot = await page.screenshot({ fullPage: true, type: 'jpeg', quality: 50 });
-    screenshots.push({ base64: shot.toString('base64'), label: vp.label });
+    const shotBase64 = await safePageScreenshot(page, { fullPage: true, quality: 50 });
+    screenshots.push({ base64: shotBase64 || '', label: vp.label });
   }
 
   // Restore original viewport

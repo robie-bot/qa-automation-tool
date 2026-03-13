@@ -15,14 +15,48 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   reports   Report[]
+  apiKeys   ApiKey[]
+  settings  UserSettings?
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String
+  provider  String   // claude, openai, gemini, ollama
+  key       String   // encrypted API key
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+model UserSettings {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  defaultProvider  String   @default("ollama")
+  defaultViewports String   @default("1920,1440,1024,768,375")
+  aiReviewVision   Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Report {
-  id        String   @id
-  userId    String
-  targetUrl String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id
+  userId        String
+  targetUrl     String
+  pagesReviewed Int      @default(0)
+  totalIssues   Int      @default(0)
+  errors        Int      @default(0)
+  warnings      Int      @default(0)
+  infos         Int      @default(0)
+  duration      Int      @default(0)    // milliseconds
+  categories    String   @default("")   // comma-separated
+  status        String   @default("completed") // running, completed, failed
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])

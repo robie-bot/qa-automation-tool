@@ -1,5 +1,6 @@
 import { Page } from 'playwright-core';
 import { TestIssue, ReviewConfig } from '@/types';
+import { safeElementScreenshot } from './screenshot-utils';
 
 // ─── Types for page.evaluate() return values ───────────────────────────────
 
@@ -135,11 +136,8 @@ export async function runImagesMediaTests(
           selector: img.selector,
         };
         if (screenshotCount < MAX_SCREENSHOTS) {
-          try {
-            const shot = await page.locator(img.selector).first().screenshot({ type: 'jpeg', quality: 60 });
-            issue.screenshot = shot.toString('base64');
-            screenshotCount++;
-          } catch { /* skip */ }
+          const shot = await safeElementScreenshot(page.locator(img.selector).first(), { quality: 60 });
+          if (shot) { issue.screenshot = shot; screenshotCount++; }
         }
         issues.push(issue);
         continue;
@@ -159,11 +157,8 @@ export async function runImagesMediaTests(
           selector: img.selector,
         };
         if (screenshotCount < MAX_SCREENSHOTS) {
-          try {
-            const shot = await page.locator(img.selector).first().screenshot({ type: 'jpeg', quality: 60 });
-            issue.screenshot = shot.toString('base64');
-            screenshotCount++;
-          } catch { /* skip */ }
+          const shot = await safeElementScreenshot(page.locator(img.selector).first(), { quality: 60 });
+          if (shot) { issue.screenshot = shot; screenshotCount++; }
         }
         issues.push(issue);
       }
@@ -377,11 +372,8 @@ export async function runImagesMediaTests(
           selector: video.selector,
         };
         if (screenshotCount < MAX_SCREENSHOTS) {
-          try {
-            const shot = await page.locator(video.selector).first().screenshot({ type: 'jpeg', quality: 60 });
-            issue.screenshot = shot.toString('base64');
-            screenshotCount++;
-          } catch { /* skip */ }
+          const shot = await safeElementScreenshot(page.locator(video.selector).first(), { quality: 60 });
+          if (shot) { issue.screenshot = shot; screenshotCount++; }
         }
         issues.push(issue);
         continue;
